@@ -215,13 +215,31 @@ export type CitySnapshotResponse = {
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
-async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`);
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(body || `Request failed: ${res.status}`);
+async function getJson<T>(path: string, retries = 3): Promise<T> {
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(`${API_URL}${path}`);
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(body || `Request failed: ${res.status}`);
+      }
+      return (await res.json()) as T;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      const msg = lastError.message.toLowerCase();
+      const retriable =
+        msg.includes("failed to fetch") ||
+        msg.includes("networkerror") ||
+        msg.includes("load failed") ||
+        msg.includes("502") ||
+        msg.includes("503") ||
+        msg.includes("504");
+      if (!retriable || attempt >= retries) break;
+      await new Promise((r) => setTimeout(r, attempt * 2500));
+    }
   }
-  return res.json() as Promise<T>;
+  throw lastError ?? new Error("Request failed");
 }
 
 export const api = {

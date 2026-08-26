@@ -41,32 +41,37 @@ def _warm_inference_cache() -> None:
 
     def _warm() -> None:
         try:
-            load_features(config)
             load_winner(config)
-            cities = _known_cities()
-            if cities:
-                predict_city(cities[0], config)
+            print("[startup] winner models loaded")
         except Exception as exc:
-            print(f"[startup] cache warmup skipped: {exc}")
+            print(f"[startup] model warmup skipped: {exc}")
 
     threading.Thread(target=_warm, name="cache-warmup", daemon=True).start()
 
-origins = [
-    o.strip()
-    for o in __import__("os").getenv(
-        "CORS_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174",
-
-    ).split(",")
-    if o.strip()
-]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins or ["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+_raw_origins = __import__("os").getenv(
+    "CORS_ORIGINS",
+    "http://localhost:5173,http://127.0.0.1:5173,https://atmovista.vercel.app",
 )
+origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+if origins == ["*"]:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    if "https://atmovista.vercel.app" not in origins:
+        origins.append("https://atmovista.vercel.app")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_origin_regex=r"https://.*\.vercel\.app",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 def _known_cities() -> list[str]:
     return [c["name"] for c in config["cities"]]

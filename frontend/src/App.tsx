@@ -856,7 +856,7 @@ function App() {
 
         {error && (
           <div className="error-banner" role="alert">
-            Could not reach the API. Make sure the backend is running, then refresh. ({error})
+            Could not reach the API. The free backend may be waking up — wait ~30–60s, then refresh. ({error})
           </div>
         )}
 

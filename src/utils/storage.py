@@ -157,13 +157,21 @@ def _load_features_hopsworks(cfg: dict[str, Any]) -> pd.DataFrame:
         name=cfg["feature_group_name"],
         version=cfg.get("feature_group_version", 2),
     )
-    try:
-        df = fg.read(online=True)
-    except Exception:
-        df = fg.read()
-    if df is None or df.empty:
-        return pd.DataFrame()
-    return df
+    errors: list[str] = []
+    for label, reader in (
+        ("select_all", lambda: fg.select_all().read()),
+        ("offline", lambda: fg.read()),
+        ("online", lambda: fg.read(online=True)),
+    ):
+        try:
+            df = reader()
+            if df is not None and not getattr(df, "empty", True):
+                print(f"[storage] Hopsworks features loaded via {label}: {len(df)} rows")
+                return df
+            errors.append(f"{label}: empty")
+        except Exception as exc:
+            errors.append(f"{label}: {type(exc).__name__}: {exc}")
+    raise RuntimeError("; ".join(errors) if errors else "No feature rows returned")
 
 def load_features(config: dict[str, Any] | None = None) -> pd.DataFrame:
     cfg = config or load_config()
