@@ -1,0 +1,16 @@
+numpy>=1.26,<2.5
+pandas>=2.1,<2.4
+pyarrow>=14.0
+requests>=2.31
+pyyaml>=6.0
+python-dotenv>=1.0
+scikit-learn>=1.4
+shap>=0.44
+joblib>=1.3
+hopsworks==5.0.*
+nest_asyncio>=1.6
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.6
+httpx>=0.27
+python-multipart>=0.0.9
