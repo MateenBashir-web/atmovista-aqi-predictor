@@ -215,7 +215,22 @@ export type CitySnapshotResponse = {
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
-async function getJson<T>(path: string, retries = 3): Promise<T> {
+function isRetriableNetworkError(message: string): boolean {
+  const msg = message.toLowerCase();
+  return (
+    msg.includes("failed to fetch") ||
+    msg.includes("networkerror") ||
+    msg.includes("load failed") ||
+    msg.includes("502") ||
+    msg.includes("503") ||
+    msg.includes("504") ||
+    msg.includes("timeout") ||
+    msg.includes("aborted")
+  );
+}
+
+/** Free Render cold starts often need 30–90s; retry long enough for mentors. */
+async function getJson<T>(path: string, retries = 8): Promise<T> {
   let lastError: Error | null = null;
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
@@ -227,22 +242,26 @@ async function getJson<T>(path: string, retries = 3): Promise<T> {
       return (await res.json()) as T;
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
-      const msg = lastError.message.toLowerCase();
-      const retriable =
-        msg.includes("failed to fetch") ||
-        msg.includes("networkerror") ||
-        msg.includes("load failed") ||
-        msg.includes("502") ||
-        msg.includes("503") ||
-        msg.includes("504");
-      if (!retriable || attempt >= retries) break;
-      await new Promise((r) => setTimeout(r, attempt * 2500));
+      if (!isRetriableNetworkError(lastError.message) || attempt >= retries) break;
+      const delayMs = Math.min(attempt * 3000, 12_000);
+      await new Promise((r) => setTimeout(r, delayMs));
     }
   }
   throw lastError ?? new Error("Request failed");
 }
 
+/** Hit /health first so cold starts wake before heavier forecast calls. */
+export async function wakeApi(): Promise<boolean> {
+  try {
+    await getJson<{ status: string }>("/health", 10);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const api = {
+  health: () => getJson<{ status: string; project?: string }>("/health"),
   cities: () => getJson<{ cities: City[] }>("/cities"),
   forecast: (city: string) => getJson<ForecastResponse>(`/aqi/forecast?city=${encodeURIComponent(city)}`),
   snapshots: () => getJson<{ snapshots: Record<string, CitySnapshotResponse> }>("/aqi/snapshots"),

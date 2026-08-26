@@ -1,0 +1,31 @@
+# Keep the free Render API from sleeping between mentor demos.
+# Render free spins down after ~15 min idle; ping every 10 min.
+name: Keep API Awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Wake Render health endpoint
+        env:
+          API_URL: https://pearls-aqi-api-ba66.onrender.com
+        run: |
+          set -e
+          for i in 1 2 3 4 5 6; do
+            echo "Attempt $i…"
+            if curl -fsS --max-time 90 "$API_URL/health"; then
+              echo ""
+              echo "API is awake."
+              exit 0
+            fi
+            echo "Not ready yet; waiting 15s…"
+            sleep 15
+          done
+          echo "Keep-alive could not reach API after retries."
+          exit 1

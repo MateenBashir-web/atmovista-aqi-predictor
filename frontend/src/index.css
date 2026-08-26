@@ -1747,6 +1747,53 @@ select {
   font-size: 0.88rem;
 }
 
+.status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.9rem 1.15rem;
+  margin-bottom: 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.status-banner.is-wake {
+  border: 1px solid rgba(110, 190, 160, 0.35);
+  background: rgba(70, 140, 120, 0.12);
+  color: #c8ebe0;
+}
+
+.status-banner.is-error {
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  background: rgba(255, 107, 107, 0.1);
+  color: #ffb4b4;
+}
+
+.status-spinner {
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-right: 0.55rem;
+  border-radius: 50%;
+  border: 2px solid rgba(200, 235, 224, 0.25);
+  border-top-color: #9fd9c6;
+  display: inline-block;
+  vertical-align: -0.1rem;
+  animation: status-spin 0.8s linear infinite;
+}
+
+@keyframes status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status-retry {
+  flex-shrink: 0;
+}
+
 .skeleton {
   background: linear-gradient(
     90deg,

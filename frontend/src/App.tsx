@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import {
   api,
+  wakeApi,
   type BaselineResponse,
   type City,
   type ForecastResponse,
@@ -314,6 +315,7 @@ function App() {
   });
   const [ops, setOps] = useState<OpsStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [waking, setWaking] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const [nowTick, setNowTick] = useState(0);
   const [exporting, setExporting] = useState(false);
@@ -400,30 +402,46 @@ function App() {
   };
 
   useEffect(() => {
-    api
-      .cities()
-      .then((res) => {
+    let cancelled = false;
+    (async () => {
+      setWaking(true);
+      const awake = await wakeApi();
+      if (cancelled) return;
+      setWaking(false);
+      if (!awake) {
+        setError("API_WAKE_FAILED");
+        return;
+      }
+      setError(null);
+      try {
+        const res = await api.cities();
+        if (cancelled) return;
         setCities(res.cities);
         if (res.cities.length) setCity(res.cities[0].name);
-      })
-      .catch((err) => setError(err.message));
-
-    api.opsStatus().then(setOps).catch(() => undefined);
-    api.leaderboard().then((l) => setLeaderboard({ winner: l.winner, models: l.models ?? [] })).catch(() => undefined);
-    api
-      .smogSeason()
-      .then((s) => {
-        setSmogSeason(s);
-        setSmogError(false);
-      })
-      .catch(() => setSmogError(true));
-    api.baseline().then(setBaseline).catch(() => undefined);
-    api.pipeline().then(setPipeline).catch(() => undefined);
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : String(err));
+      }
+      api.opsStatus().then(setOps).catch(() => undefined);
+      api.leaderboard().then((l) => setLeaderboard({ winner: l.winner, models: l.models ?? [] })).catch(() => undefined);
+      api
+        .smogSeason()
+        .then((s) => {
+          setSmogSeason(s);
+          setSmogError(false);
+        })
+        .catch(() => setSmogError(true));
+      api.baseline().then(setBaseline).catch(() => undefined);
+      api.pipeline().then(setPipeline).catch(() => undefined);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     if (cityError) setError(cityError);
-  }, [cityError]);
+    else if (forecast) setError(null);
+  }, [cityError, forecast]);
 
   useEffect(() => {
     if (!forecast || !cities.length) return;
@@ -854,9 +872,27 @@ function App() {
           </div>
         </nav>
 
-        {error && (
-          <div className="error-banner" role="alert">
-            Could not reach the API. The free backend may be waking up — wait ~30–60s, then refresh. ({error})
+        {(waking || error) && (
+          <div
+            className={`status-banner ${error && !waking ? "is-error" : "is-wake"}`}
+            role="status"
+            aria-live="polite"
+          >
+            {waking ? (
+              <>
+                <span className="status-spinner" aria-hidden />
+                Starting the forecast server… this can take up to a minute on the free plan.
+              </>
+            ) : (
+              <>
+                <span>
+                  Couldn’t reach the forecast API. It may still be starting — wait a moment, then try again.
+                </span>
+                <button type="button" className="btn status-retry" onClick={() => window.location.reload()}>
+                  Retry now
+                </button>
+              </>
+            )}
           </div>
         )}
 
