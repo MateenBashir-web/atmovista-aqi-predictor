@@ -7,7 +7,6 @@ import {
   CartesianGrid,
   ComposedChart,
   Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
