@@ -1,0 +1,483 @@
+{
+  "mode": "per_horizon",
+  "name": "ridge@24h+hist_gradient_boosting@48h+ridge@72h",
+  "type": "per_horizon",
+  "realistic_mode": true,
+  "horizons_hours": [
+    24,
+    48,
+    72
+  ],
+  "horizon_winners": {
+    "24": {
+      "horizon_hours": 24,
+      "name": "ridge",
+      "type": "sklearn",
+      "feature_cols": [
+        "pm10",
+        "pm25",
+        "co",
+        "no2",
+        "so2",
+        "o3",
+        "temperature_2m",
+        "relative_humidity_2m",
+        "precipitation",
+        "wind_speed_10m",
+        "wind_direction_10m",
+        "cloud_cover",
+        "surface_pressure",
+        "aqi",
+        "hour",
+        "day",
+        "day_of_week",
+        "month",
+        "hour_sin",
+        "hour_cos",
+        "month_sin",
+        "month_cos",
+        "dow_sin",
+        "dow_cos",
+        "aqi_change_rate",
+        "aqi_pct_change",
+        "aqi_lag_1h",
+        "pm25_lag_1h",
+        "aqi_lag_3h",
+        "pm25_lag_3h",
+        "aqi_lag_6h",
+        "pm25_lag_6h",
+        "aqi_lag_12h",
+        "pm25_lag_12h",
+        "aqi_lag_24h",
+        "pm25_lag_24h",
+        "aqi_lag_48h",
+        "pm25_lag_48h",
+        "aqi_lag_72h",
+        "pm25_lag_72h",
+        "aqi_roll_mean_6h",
+        "aqi_roll_std_6h",
+        "aqi_roll_mean_12h",
+        "aqi_roll_std_12h",
+        "aqi_roll_mean_24h",
+        "aqi_roll_std_24h",
+        "temp_humidity",
+        "wind_pm25",
+        "temperature_2m_fwd_24h",
+        "relative_humidity_2m_fwd_24h",
+        "precipitation_fwd_24h",
+        "wind_speed_10m_fwd_24h",
+        "wind_direction_10m_fwd_24h",
+        "cloud_cover_fwd_24h",
+        "surface_pressure_fwd_24h"
+      ],
+      "targets": [
+        "aqi_target_24h"
+      ],
+      "val_metrics": {
+        "overall": {
+          "rmse": 21.63012589494297,
+          "mae": 14.333211965543015,
+          "r2": 0.7160220792385126,
+          "category_accuracy": 0.7276785714285714
+        },
+        "per_horizon": {
+          "aqi_target_24h": {
+            "rmse": 21.63012589494297,
+            "mae": 14.333211965543015,
+            "r2": 0.7160220792385126,
+            "category_accuracy": 0.7276785714285714
+          }
+        }
+      },
+      "test_metrics": {
+        "overall": {
+          "rmse": 20.62939838100117,
+          "mae": 14.766795190336865,
+          "r2": 0.6113968696882806,
+          "category_accuracy": 0.6776785714285715
+        },
+        "per_horizon": {
+          "aqi_target_24h": {
+            "rmse": 20.62939838100117,
+            "mae": 14.766795190336865,
+            "r2": 0.6113968696882806,
+            "category_accuracy": 0.6776785714285715
+          }
+        }
+      },
+      "prediction_interval": {
+        "level": 0.8,
+        "residual_std": 20.72976328328116,
+        "q_low": -14.483777767916212,
+        "q_high": 28.848257110070037
+      },
+      "persistence_baseline": {
+        "val": {
+          "rmse": 26.779667571463527,
+          "mae": 16.382738095238096,
+          "r2": 0.5647118505065805,
+          "category_accuracy": 0.69375
+        },
+        "test": {
+          "rmse": 23.21181580267134,
+          "mae": 16.491964285714285,
+          "r2": 0.5080155229183789,
+          "category_accuracy": 0.674702380952381
+        }
+      }
+    },
+    "48": {
+      "horizon_hours": 48,
+      "name": "hist_gradient_boosting",
+      "type": "sklearn",
+      "feature_cols": [
+        "pm10",
+        "pm25",
+        "co",
+        "no2",
+        "so2",
+        "o3",
+        "temperature_2m",
+        "relative_humidity_2m",
+        "precipitation",
+        "wind_speed_10m",
+        "wind_direction_10m",
+        "cloud_cover",
+        "surface_pressure",
+        "aqi",
+        "hour",
+        "day",
+        "day_of_week",
+        "month",
+        "hour_sin",
+        "hour_cos",
+        "month_sin",
+        "month_cos",
+        "dow_sin",
+        "dow_cos",
+        "aqi_change_rate",
+        "aqi_pct_change",
+        "aqi_lag_1h",
+        "pm25_lag_1h",
+        "aqi_lag_3h",
+        "pm25_lag_3h",
+        "aqi_lag_6h",
+        "pm25_lag_6h",
+        "aqi_lag_12h",
+        "pm25_lag_12h",
+        "aqi_lag_24h",
+        "pm25_lag_24h",
+        "aqi_lag_48h",
+        "pm25_lag_48h",
+        "aqi_lag_72h",
+        "pm25_lag_72h",
+        "aqi_roll_mean_6h",
+        "aqi_roll_std_6h",
+        "aqi_roll_mean_12h",
+        "aqi_roll_std_12h",
+        "aqi_roll_mean_24h",
+        "aqi_roll_std_24h",
+        "temp_humidity",
+        "wind_pm25",
+        "temperature_2m_fwd_48h",
+        "relative_humidity_2m_fwd_48h",
+        "precipitation_fwd_48h",
+        "wind_speed_10m_fwd_48h",
+        "wind_direction_10m_fwd_48h",
+        "cloud_cover_fwd_48h",
+        "surface_pressure_fwd_48h"
+      ],
+      "targets": [
+        "aqi_target_48h"
+      ],
+      "val_metrics": {
+        "overall": {
+          "rmse": 26.22295215012002,
+          "mae": 18.642276687089264,
+          "r2": 0.5826219116302582,
+          "category_accuracy": 0.5988095238095238
+        },
+        "per_horizon": {
+          "aqi_target_48h": {
+            "rmse": 26.22295215012002,
+            "mae": 18.642276687089264,
+            "r2": 0.5826219116302582,
+            "category_accuracy": 0.5988095238095238
+          }
+        }
+      },
+      "test_metrics": {
+        "overall": {
+          "rmse": 26.634721876802253,
+          "mae": 19.264907590475545,
+          "r2": 0.35221706705294487,
+          "category_accuracy": 0.58125
+        },
+        "per_horizon": {
+          "aqi_target_48h": {
+            "rmse": 26.634721876802253,
+            "mae": 19.264907590475545,
+            "r2": 0.35221706705294487,
+            "category_accuracy": 0.58125
+          }
+        }
+      },
+      "prediction_interval": {
+        "level": 0.8,
+        "residual_std": 25.150393807375075,
+        "q_low": -19.10818493247118,
+        "q_high": 39.364487331107924
+      },
+      "persistence_baseline": {
+        "val": {
+          "rmse": 32.391531447645534,
+          "mae": 20.09464285714286,
+          "r2": 0.3631613047764979,
+          "category_accuracy": 0.6651785714285714
+        },
+        "test": {
+          "rmse": 28.99673113760699,
+          "mae": 21.022321428571427,
+          "r2": 0.23222979809401456,
+          "category_accuracy": 0.6077380952380952
+        }
+      }
+    },
+    "72": {
+      "horizon_hours": 72,
+      "name": "ridge",
+      "type": "sklearn",
+      "feature_cols": [
+        "pm10",
+        "pm25",
+        "co",
+        "no2",
+        "so2",
+        "o3",
+        "temperature_2m",
+        "relative_humidity_2m",
+        "precipitation",
+        "wind_speed_10m",
+        "wind_direction_10m",
+        "cloud_cover",
+        "surface_pressure",
+        "aqi",
+        "hour",
+        "day",
+        "day_of_week",
+        "month",
+        "hour_sin",
+        "hour_cos",
+        "month_sin",
+        "month_cos",
+        "dow_sin",
+        "dow_cos",
+        "aqi_change_rate",
+        "aqi_pct_change",
+        "aqi_lag_1h",
+        "pm25_lag_1h",
+        "aqi_lag_3h",
+        "pm25_lag_3h",
+        "aqi_lag_6h",
+        "pm25_lag_6h",
+        "aqi_lag_12h",
+        "pm25_lag_12h",
+        "aqi_lag_24h",
+        "pm25_lag_24h",
+        "aqi_lag_48h",
+        "pm25_lag_48h",
+        "aqi_lag_72h",
+        "pm25_lag_72h",
+        "aqi_roll_mean_6h",
+        "aqi_roll_std_6h",
+        "aqi_roll_mean_12h",
+        "aqi_roll_std_12h",
+        "aqi_roll_mean_24h",
+        "aqi_roll_std_24h",
+        "temp_humidity",
+        "wind_pm25",
+        "temperature_2m_fwd_72h",
+        "relative_humidity_2m_fwd_72h",
+        "precipitation_fwd_72h",
+        "wind_speed_10m_fwd_72h",
+        "wind_direction_10m_fwd_72h",
+        "cloud_cover_fwd_72h",
+        "surface_pressure_fwd_72h"
+      ],
+      "targets": [
+        "aqi_target_72h"
+      ],
+      "val_metrics": {
+        "overall": {
+          "rmse": 28.47020741055175,
+          "mae": 19.777856951285145,
+          "r2": 0.5080196662382094,
+          "category_accuracy": 0.612202380952381
+        },
+        "per_horizon": {
+          "aqi_target_72h": {
+            "rmse": 28.47020741055175,
+            "mae": 19.777856951285145,
+            "r2": 0.5080196662382094,
+            "category_accuracy": 0.612202380952381
+          }
+        }
+      },
+      "test_metrics": {
+        "overall": {
+          "rmse": 28.175008768651654,
+          "mae": 20.904641746018253,
+          "r2": 0.27512805916779537,
+          "category_accuracy": 0.549404761904762
+        },
+        "per_horizon": {
+          "aqi_target_72h": {
+            "rmse": 28.175008768651654,
+            "mae": 20.904641746018253,
+            "r2": 0.27512805916779537,
+            "category_accuracy": 0.549404761904762
+          }
+        }
+      },
+      "prediction_interval": {
+        "level": 0.8,
+        "residual_std": 26.73467410863656,
+        "q_low": -19.05142038221547,
+        "q_high": 40.2728533466393
+      },
+      "persistence_baseline": {
+        "val": {
+          "rmse": 32.993623121243694,
+          "mae": 21.975,
+          "r2": 0.33926623754930507,
+          "category_accuracy": 0.6419642857142858
+        },
+        "test": {
+          "rmse": 32.88987306147593,
+          "mae": 24.127083333333335,
+          "r2": 0.012226060851365572,
+          "category_accuracy": 0.5794642857142858
+        }
+      }
+    }
+  },
+  "feature_cols": [
+    "pm10",
+    "pm25",
+    "co",
+    "no2",
+    "so2",
+    "o3",
+    "temperature_2m",
+    "relative_humidity_2m",
+    "precipitation",
+    "wind_speed_10m",
+    "wind_direction_10m",
+    "cloud_cover",
+    "surface_pressure",
+    "aqi",
+    "hour",
+    "day",
+    "day_of_week",
+    "month",
+    "hour_sin",
+    "hour_cos",
+    "month_sin",
+    "month_cos",
+    "dow_sin",
+    "dow_cos",
+    "aqi_change_rate",
+    "aqi_pct_change",
+    "aqi_lag_1h",
+    "pm25_lag_1h",
+    "aqi_lag_3h",
+    "pm25_lag_3h",
+    "aqi_lag_6h",
+    "pm25_lag_6h",
+    "aqi_lag_12h",
+    "pm25_lag_12h",
+    "aqi_lag_24h",
+    "pm25_lag_24h",
+    "aqi_lag_48h",
+    "pm25_lag_48h",
+    "aqi_lag_72h",
+    "pm25_lag_72h",
+    "aqi_roll_mean_6h",
+    "aqi_roll_std_6h",
+    "aqi_roll_mean_12h",
+    "aqi_roll_std_12h",
+    "aqi_roll_mean_24h",
+    "aqi_roll_std_24h",
+    "temp_humidity",
+    "wind_pm25",
+    "temperature_2m_fwd_24h",
+    "relative_humidity_2m_fwd_24h",
+    "precipitation_fwd_24h",
+    "wind_speed_10m_fwd_24h",
+    "wind_direction_10m_fwd_24h",
+    "cloud_cover_fwd_24h",
+    "surface_pressure_fwd_24h"
+  ],
+  "targets": [
+    "aqi_target_24h",
+    "aqi_target_48h",
+    "aqi_target_72h"
+  ],
+  "trained_at": "2026-08-11T09:02:12.622430+00:00",
+  "val_metrics": {
+    "overall": {
+      "rmse": 25.44109515187158,
+      "mae": 17.58444853463914,
+      "r2": 0.6022212190356601,
+      "category_accuracy": 0.6462301587301588
+    },
+    "per_horizon": {
+      "aqi_target_24h": {
+        "rmse": 21.63012589494297,
+        "mae": 14.333211965543015,
+        "r2": 0.7160220792385126,
+        "category_accuracy": 0.7276785714285714
+      },
+      "aqi_target_48h": {
+        "rmse": 26.22295215012002,
+        "mae": 18.642276687089264,
+        "r2": 0.5826219116302582,
+        "category_accuracy": 0.5988095238095238
+      },
+      "aqi_target_72h": {
+        "rmse": 28.47020741055175,
+        "mae": 19.777856951285145,
+        "r2": 0.5080196662382094,
+        "category_accuracy": 0.612202380952381
+      }
+    }
+  },
+  "test_metrics": {
+    "overall": {
+      "rmse": 25.146376342151694,
+      "mae": 18.312114842276888,
+      "r2": 0.4129139986363402,
+      "category_accuracy": 0.6027777777777779
+    },
+    "per_horizon": {
+      "aqi_target_24h": {
+        "rmse": 20.62939838100117,
+        "mae": 14.766795190336865,
+        "r2": 0.6113968696882806,
+        "category_accuracy": 0.6776785714285715
+      },
+      "aqi_target_48h": {
+        "rmse": 26.634721876802253,
+        "mae": 19.264907590475545,
+        "r2": 0.35221706705294487,
+        "category_accuracy": 0.58125
+      },
+      "aqi_target_72h": {
+        "rmse": 28.175008768651654,
+        "mae": 20.904641746018253,
+        "r2": 0.27512805916779537,
+        "category_accuracy": 0.549404761904762
+      }
+    }
+  }
+}

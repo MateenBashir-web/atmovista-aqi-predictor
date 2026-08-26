@@ -1,0 +1,425 @@
+{
+  "updated_at": "2026-08-11T09:02:34.893797+00:00",
+  "total_rows": 3525,
+  "scored_rows": 3500,
+  "pending_rows": 25,
+  "overall": {
+    "rmse": 19.319678761138782,
+    "mae": 12.33099946772937,
+    "r2": 0.7442333310100733,
+    "category_accuracy": 0.7477142857142857,
+    "mean_abs_error": 12.33099946772937
+  },
+  "by_horizon": {
+    "24": {
+      "rmse": 15.844236781381056,
+      "mae": 10.419773034346344,
+      "r2": 0.8303389252295191,
+      "category_accuracy": 0.788034188034188,
+      "n": 1170
+    },
+    "48": {
+      "rmse": 20.56479937164493,
+      "mae": 13.476719585049588,
+      "r2": 0.7090648121024913,
+      "category_accuracy": 0.721030042918455,
+      "n": 1165
+    },
+    "72": {
+      "rmse": 21.126373493677175,
+      "mae": 13.104708472347475,
+      "r2": 0.6910329731504301,
+      "category_accuracy": 0.7339055793991416,
+      "n": 1165
+    }
+  },
+  "by_city": {
+    "Islamabad": {
+      "mae": 13.151392710819525,
+      "category_accuracy": 0.6671428571428571,
+      "n": 700
+    },
+    "Karachi": {
+      "mae": 4.676842547959573,
+      "category_accuracy": 0.9757142857142858,
+      "n": 700
+    },
+    "Lahore": {
+      "mae": 16.36491917494395,
+      "category_accuracy": 0.6828571428571428,
+      "n": 700
+    },
+    "Peshawar": {
+      "mae": 12.949284625662216,
+      "category_accuracy": 0.7014285714285714,
+      "n": 700
+    },
+    "Quetta": {
+      "mae": 14.512558279261594,
+      "category_accuracy": 0.7114285714285714,
+      "n": 700
+    }
+  },
+  "recent": [
+    {
+      "city": "Quetta",
+      "horizon_hours": 24,
+      "issued_at": "2026-08-09T23:00:00Z",
+      "target_time": "2026-08-10T23:00:00Z",
+      "predicted_aqi": 93.8,
+      "actual_aqi": 102.0,
+      "abs_error": 8.2,
+      "category_hit": false,
+      "predicted_category": "Moderate",
+      "actual_category": "Unhealthy for Sensitive Groups"
+    },
+    {
+      "city": "Peshawar",
+      "horizon_hours": 24,
+      "issued_at": "2026-08-09T23:00:00Z",
+      "target_time": "2026-08-10T23:00:00Z",
+      "predicted_aqi": 130.8,
+      "actual_aqi": 130.0,
+      "abs_error": 0.8,
+      "category_hit": true,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy for Sensitive Groups"
+    },
+    {
+      "city": "Lahore",
+      "horizon_hours": 24,
+      "issued_at": "2026-08-09T23:00:00Z",
+      "target_time": "2026-08-10T23:00:00Z",
+      "predicted_aqi": 152.5,
+      "actual_aqi": 158.0,
+      "abs_error": 5.5,
+      "category_hit": true,
+      "predicted_category": "Unhealthy",
+      "actual_category": "Unhealthy"
+    },
+    {
+      "city": "Karachi",
+      "horizon_hours": 24,
+      "issued_at": "2026-08-09T23:00:00Z",
+      "target_time": "2026-08-10T23:00:00Z",
+      "predicted_aqi": 71.5,
+      "actual_aqi": 71.0,
+      "abs_error": 0.5,
+      "category_hit": true,
+      "predicted_category": "Moderate",
+      "actual_category": "Moderate"
+    },
+    {
+      "city": "Islamabad",
+      "horizon_hours": 24,
+      "issued_at": "2026-08-09T23:00:00Z",
+      "target_time": "2026-08-10T23:00:00Z",
+      "predicted_aqi": 108.3,
+      "actual_aqi": 95.0,
+      "abs_error": 13.3,
+      "category_hit": false,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Moderate"
+    },
+    {
+      "city": "Peshawar",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T18:00:00Z",
+      "target_time": "2026-08-10T18:00:00Z",
+      "predicted_aqi": 102.3,
+      "actual_aqi": 135.0,
+      "abs_error": 32.7,
+      "category_hit": true,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy for Sensitive Groups"
+    },
+    {
+      "city": "Islamabad",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T18:00:00Z",
+      "target_time": "2026-08-10T18:00:00Z",
+      "predicted_aqi": 95.1,
+      "actual_aqi": 102.0,
+      "abs_error": 6.9,
+      "category_hit": false,
+      "predicted_category": "Moderate",
+      "actual_category": "Unhealthy for Sensitive Groups"
+    },
+    {
+      "city": "Karachi",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T18:00:00Z",
+      "target_time": "2026-08-10T18:00:00Z",
+      "predicted_aqi": 76.0,
+      "actual_aqi": 69.0,
+      "abs_error": 7.0,
+      "category_hit": true,
+      "predicted_category": "Moderate",
+      "actual_category": "Moderate"
+    },
+    {
+      "city": "Lahore",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T18:00:00Z",
+      "target_time": "2026-08-10T18:00:00Z",
+      "predicted_aqi": 123.9,
+      "actual_aqi": 167.0,
+      "abs_error": 43.1,
+      "category_hit": false,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy"
+    },
+    {
+      "city": "Quetta",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T18:00:00Z",
+      "target_time": "2026-08-10T18:00:00Z",
+      "predicted_aqi": 121.0,
+      "actual_aqi": 105.0,
+      "abs_error": 16.0,
+      "category_hit": true,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy for Sensitive Groups"
+    },
+    {
+      "city": "Peshawar",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T12:00:00Z",
+      "target_time": "2026-08-10T12:00:00Z",
+      "predicted_aqi": 129.7,
+      "actual_aqi": 182.0,
+      "abs_error": 52.3,
+      "category_hit": false,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy"
+    },
+    {
+      "city": "Islamabad",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T12:00:00Z",
+      "target_time": "2026-08-10T12:00:00Z",
+      "predicted_aqi": 146.2,
+      "actual_aqi": 168.0,
+      "abs_error": 21.8,
+      "category_hit": false,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy"
+    },
+    {
+      "city": "Quetta",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T12:00:00Z",
+      "target_time": "2026-08-10T12:00:00Z",
+      "predicted_aqi": 125.2,
+      "actual_aqi": 113.0,
+      "abs_error": 12.2,
+      "category_hit": true,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy for Sensitive Groups"
+    },
+    {
+      "city": "Karachi",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T12:00:00Z",
+      "target_time": "2026-08-10T12:00:00Z",
+      "predicted_aqi": 75.4,
+      "actual_aqi": 71.0,
+      "abs_error": 4.4,
+      "category_hit": true,
+      "predicted_category": "Moderate",
+      "actual_category": "Moderate"
+    },
+    {
+      "city": "Lahore",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T12:00:00Z",
+      "target_time": "2026-08-10T12:00:00Z",
+      "predicted_aqi": 152.8,
+      "actual_aqi": 225.0,
+      "abs_error": 72.2,
+      "category_hit": false,
+      "predicted_category": "Unhealthy",
+      "actual_category": "Very Unhealthy"
+    },
+    {
+      "city": "Islamabad",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T06:00:00Z",
+      "target_time": "2026-08-10T06:00:00Z",
+      "predicted_aqi": 93.6,
+      "actual_aqi": 101.0,
+      "abs_error": 7.4,
+      "category_hit": false,
+      "predicted_category": "Moderate",
+      "actual_category": "Unhealthy for Sensitive Groups"
+    },
+    {
+      "city": "Karachi",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T06:00:00Z",
+      "target_time": "2026-08-10T06:00:00Z",
+      "predicted_aqi": 70.7,
+      "actual_aqi": 71.0,
+      "abs_error": 0.3,
+      "category_hit": true,
+      "predicted_category": "Moderate",
+      "actual_category": "Moderate"
+    },
+    {
+      "city": "Lahore",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T06:00:00Z",
+      "target_time": "2026-08-10T06:00:00Z",
+      "predicted_aqi": 129.1,
+      "actual_aqi": 164.0,
+      "abs_error": 34.9,
+      "category_hit": false,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy"
+    },
+    {
+      "city": "Peshawar",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T06:00:00Z",
+      "target_time": "2026-08-10T06:00:00Z",
+      "predicted_aqi": 106.3,
+      "actual_aqi": 132.0,
+      "abs_error": 25.7,
+      "category_hit": true,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy for Sensitive Groups"
+    },
+    {
+      "city": "Quetta",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T06:00:00Z",
+      "target_time": "2026-08-10T06:00:00Z",
+      "predicted_aqi": 119.2,
+      "actual_aqi": 97.0,
+      "abs_error": 22.2,
+      "category_hit": false,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Moderate"
+    },
+    {
+      "city": "Karachi",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T00:00:00Z",
+      "target_time": "2026-08-10T00:00:00Z",
+      "predicted_aqi": 72.8,
+      "actual_aqi": 73.0,
+      "abs_error": 0.2,
+      "category_hit": true,
+      "predicted_category": "Moderate",
+      "actual_category": "Moderate"
+    },
+    {
+      "city": "Lahore",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T00:00:00Z",
+      "target_time": "2026-08-10T00:00:00Z",
+      "predicted_aqi": 128.8,
+      "actual_aqi": 157.0,
+      "abs_error": 28.2,
+      "category_hit": false,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy"
+    },
+    {
+      "city": "Peshawar",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T00:00:00Z",
+      "target_time": "2026-08-10T00:00:00Z",
+      "predicted_aqi": 105.3,
+      "actual_aqi": 123.0,
+      "abs_error": 17.7,
+      "category_hit": true,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy for Sensitive Groups"
+    },
+    {
+      "city": "Islamabad",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T00:00:00Z",
+      "target_time": "2026-08-10T00:00:00Z",
+      "predicted_aqi": 103.0,
+      "actual_aqi": 106.0,
+      "abs_error": 3.0,
+      "category_hit": true,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy for Sensitive Groups"
+    },
+    {
+      "city": "Quetta",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-07T00:00:00Z",
+      "target_time": "2026-08-10T00:00:00Z",
+      "predicted_aqi": 103.0,
+      "actual_aqi": 84.0,
+      "abs_error": 19.0,
+      "category_hit": false,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Moderate"
+    },
+    {
+      "city": "Quetta",
+      "horizon_hours": 48,
+      "issued_at": "2026-08-07T18:00:00Z",
+      "target_time": "2026-08-09T18:00:00Z",
+      "predicted_aqi": 104.2,
+      "actual_aqi": 90.0,
+      "abs_error": 14.2,
+      "category_hit": false,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Moderate"
+    },
+    {
+      "city": "Karachi",
+      "horizon_hours": 48,
+      "issued_at": "2026-08-07T18:00:00Z",
+      "target_time": "2026-08-09T18:00:00Z",
+      "predicted_aqi": 74.5,
+      "actual_aqi": 75.0,
+      "abs_error": 0.5,
+      "category_hit": true,
+      "predicted_category": "Moderate",
+      "actual_category": "Moderate"
+    },
+    {
+      "city": "Islamabad",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-06T18:00:00Z",
+      "target_time": "2026-08-09T18:00:00Z",
+      "predicted_aqi": 118.7,
+      "actual_aqi": 111.0,
+      "abs_error": 7.7,
+      "category_hit": true,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy for Sensitive Groups"
+    },
+    {
+      "city": "Karachi",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-06T18:00:00Z",
+      "target_time": "2026-08-09T18:00:00Z",
+      "predicted_aqi": 76.2,
+      "actual_aqi": 75.0,
+      "abs_error": 1.2,
+      "category_hit": true,
+      "predicted_category": "Moderate",
+      "actual_category": "Moderate"
+    },
+    {
+      "city": "Lahore",
+      "horizon_hours": 72,
+      "issued_at": "2026-08-06T18:00:00Z",
+      "target_time": "2026-08-09T18:00:00Z",
+      "predicted_aqi": 129.9,
+      "actual_aqi": 136.0,
+      "abs_error": 6.1,
+      "category_hit": true,
+      "predicted_category": "Unhealthy for Sensitive Groups",
+      "actual_category": "Unhealthy for Sensitive Groups"
+    }
+  ]
+}

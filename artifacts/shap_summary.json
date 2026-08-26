@@ -1,0 +1,87 @@
+{
+  "available": true,
+  "method": "absolute_coefficients",
+  "top_features": [
+    {
+      "feature": "city__city_Quetta",
+      "importance": 26.928878954505908
+    },
+    {
+      "feature": "num__pm25",
+      "importance": 24.68852861608646
+    },
+    {
+      "feature": "city__city_Karachi",
+      "importance": 20.703381361017176
+    },
+    {
+      "feature": "num__surface_pressure",
+      "importance": 18.084767925183485
+    },
+    {
+      "feature": "num__pm25_lag_1h",
+      "importance": 11.548352360488659
+    },
+    {
+      "feature": "num__aqi_lag_1h",
+      "importance": 9.615810387674987
+    },
+    {
+      "feature": "num__aqi",
+      "importance": 8.350062987979355
+    },
+    {
+      "feature": "num__aqi_lag_24h",
+      "importance": 8.311796091451274
+    },
+    {
+      "feature": "num__aqi_roll_mean_24h",
+      "importance": 7.229870679153463
+    },
+    {
+      "feature": "num__pm25_lag_24h",
+      "importance": 7.082009890821269
+    },
+    {
+      "feature": "num__aqi_lag_48h",
+      "importance": 4.458743014482356
+    },
+    {
+      "feature": "city__city_Peshawar",
+      "importance": 4.4505162424091065
+    },
+    {
+      "feature": "num__temp_humidity",
+      "importance": 4.37872710770618
+    },
+    {
+      "feature": "num__pm10",
+      "importance": 4.280607543745457
+    },
+    {
+      "feature": "city__city_Lahore",
+      "importance": 3.6917789288887595
+    },
+    {
+      "feature": "num__pm25_lag_72h",
+      "importance": 3.6255065500600936
+    },
+    {
+      "feature": "num__aqi_lag_72h",
+      "importance": 3.5314149033532827
+    },
+    {
+      "feature": "num__aqi_pct_change",
+      "importance": 3.527323446239094
+    },
+    {
+      "feature": "num__aqi_roll_mean_12h",
+      "importance": 3.2065928367877454
+    },
+    {
+      "feature": "num__temperature_2m",
+      "importance": 3.080567309173956
+    }
+  ],
+  "model": "ridge"
+}

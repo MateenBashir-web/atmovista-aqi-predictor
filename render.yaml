@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: pearls-aqi-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: STORAGE_MODE
+        value: hopsworks
+      - key: CORS_ORIGINS
+        sync: false
+      - key: HOPSWORKS_API_KEY
+        sync: false
+      - key: HOPSWORKS_PROJECT
+        sync: false
+      - key: HOPSWORKS_HOST
+        sync: false
