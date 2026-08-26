@@ -45,6 +45,19 @@ def _warm_inference_cache() -> None:
             print("[startup] winner models loaded")
         except Exception as exc:
             print(f"[startup] model warmup skipped: {exc}")
+        try:
+            from src.utils.storage import load_features
+
+            df = load_features(config)
+            print(f"[startup] features warmed: {0 if df is None else len(df)} rows")
+        except Exception as exc:
+            print(f"[startup] feature warmup skipped: {exc}")
+        try:
+            # Prime one city so the first mentor click is fast
+            predict_city(config["cities"][0]["name"], config)
+            print("[startup] sample forecast warmed")
+        except Exception as exc:
+            print(f"[startup] forecast warmup skipped: {exc}")
 
     threading.Thread(target=_warm, name="cache-warmup", daemon=True).start()
 

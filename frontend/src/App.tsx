@@ -881,7 +881,7 @@ function App() {
             {waking ? (
               <>
                 <span className="status-spinner" aria-hidden />
-                Starting the forecast server… this can take up to a minute on the free plan.
+                Starting the forecast server… first load can take a little while.
               </>
             ) : (
               <>
