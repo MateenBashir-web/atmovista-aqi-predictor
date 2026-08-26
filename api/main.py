@@ -143,7 +143,34 @@ def forecast(city: str = Query(...)):
 
 @app.get("/aqi/snapshots")
 def snapshots():
+    """Fast map pins: latest observed AQI per city (no model inference)."""
+    import pandas as pd
+
+    from src.utils.aqi_bands import aqi_category, aqi_color
+
     rows: dict[str, dict] = {}
+    try:
+        df = load_features(config)
+    except Exception:
+        df = None
+    if df is not None and not df.empty and "city" in df.columns:
+        work = df.copy()
+        work["event_time"] = pd.to_datetime(work["event_time"], utc=True)
+        for name in _known_cities():
+            city_df = work[work["city"] == name].sort_values("event_time")
+            if city_df.empty:
+                continue
+            last = city_df.iloc[-1]
+            aqi = float(last["aqi"]) if pd.notna(last.get("aqi")) else None
+            rows[name] = {
+                "city": name,
+                "current_aqi": None if aqi is None else round(aqi, 1),
+                "current_category": aqi_category(aqi),
+                "current_color": aqi_color(aqi),
+                "event_time": str(last["event_time"]),
+            }
+        return {"snapshots": rows}
+
     for name in _known_cities():
         try:
             pred = predict_city(name, config)
@@ -159,7 +186,7 @@ def snapshots():
     return {"snapshots": rows}
 
 @app.get("/aqi/history")
-def history(city: str = Query(...), hours: int = Query(168, ge=24, le=720)):
+def history(city: str = Query(...), hours: int = Query(168, ge=24, le=336)):
     city = _validate_city(city)
     try:
         return {"city": city, "hours": hours, "points": history_for_city(city, hours=hours, config=config)}

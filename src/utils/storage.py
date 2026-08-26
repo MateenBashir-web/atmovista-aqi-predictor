@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -10,7 +11,20 @@ import pandas as pd
 from .config import get_project_root, load_config
 
 _FEATURES_MEM: dict[str, Any] = {}
-_FEATURES_MEM_TTL_SEC = 300.0
+_FEATURES_MEM_TTL_SEC = 3600.0  # features refresh hourly; keep warm between requests
+_FEATURES_LOAD_LOCK = threading.Lock()
+# Inference + ~7-day history only need recent rows; full FG OOMs Starter (512MB).
+_FEATURES_KEEP_PER_CITY = 336
+
+
+def _trim_features_for_serving(df: pd.DataFrame) -> pd.DataFrame:
+    if df is None or df.empty or "city" not in df.columns or "event_time" not in df.columns:
+        return df
+    work = df.copy()
+    work["event_time"] = pd.to_datetime(work["event_time"], utc=True)
+    work = work.sort_values(["city", "event_time"])
+    trimmed = work.groupby("city", group_keys=False).tail(_FEATURES_KEEP_PER_CITY)
+    return trimmed.reset_index(drop=True)
 
 def resolve_storage_mode(config: dict[str, Any] | None = None) -> str:
     mode = os.getenv("STORAGE_MODE", "auto").lower()
@@ -169,17 +183,41 @@ def _load_features_hopsworks(cfg: dict[str, Any]) -> pd.DataFrame:
         version=cfg.get("feature_group_version", 2),
     )
     errors: list[str] = []
+
+    def _try_read(label: str, reader):
+        df = reader()
+        if df is not None and not getattr(df, "empty", True):
+            trimmed = _trim_features_for_serving(df)
+            print(
+                f"[storage] Hopsworks features via {label}: "
+                f"{len(df)} raw → {len(trimmed)} kept for serving"
+            )
+            return trimmed
+        errors.append(f"{label}: empty")
+        return None
+
+    # Prefer a time-filtered read when the FG supports it (much less data over the wire).
+    try:
+        from datetime import datetime, timedelta, timezone
+
+        cutoff = datetime.now(timezone.utc) - timedelta(days=14)
+        if hasattr(fg, "event_time") or "event_time" in getattr(fg, "features", []):
+            filtered = fg.filter(fg.event_time >= cutoff)
+            got = _try_read("filtered_14d", filtered.read)
+            if got is not None:
+                return got
+    except Exception as exc:
+        errors.append(f"filtered_14d: {type(exc).__name__}: {exc}")
+
     for label, reader in (
         ("select_all", lambda: fg.select_all().read()),
         ("offline", lambda: fg.read()),
         ("online", lambda: fg.read(online=True)),
     ):
         try:
-            df = reader()
-            if df is not None and not getattr(df, "empty", True):
-                print(f"[storage] Hopsworks features loaded via {label}: {len(df)} rows")
-                return df
-            errors.append(f"{label}: empty")
+            got = _try_read(label, reader)
+            if got is not None:
+                return got
         except Exception as exc:
             errors.append(f"{label}: {type(exc).__name__}: {exc}")
     raise RuntimeError("; ".join(errors) if errors else "No feature rows returned")
@@ -192,29 +230,35 @@ def load_features(config: dict[str, Any] | None = None) -> pd.DataFrame:
     if cached is not None and not cached.empty:
         return cached
 
-    if mode == "hopsworks":
+    # Single-flight: avoid stampedes that crash Starter RAM / block the API.
+    with _FEATURES_LOAD_LOCK:
+        cached = _mem_features()
+        if cached is not None and not cached.empty:
+            return cached
+
+        if mode == "hopsworks":
+            try:
+                df = _load_features_hopsworks(cfg)
+                if not df.empty:
+                    return _store_mem_features(df, "hopsworks")
+            except Exception as exc:
+                print(f"[storage] Hopsworks load failed ({type(exc).__name__}): {exc}")
+            return pd.DataFrame()
+
+        if mode == "local":
+            df = load_features_local(cfg)
+            if not df.empty:
+                return _store_mem_features(_trim_features_for_serving(df), "local")
+            return df
+
         try:
             df = _load_features_hopsworks(cfg)
             if not df.empty:
                 return _store_mem_features(df, "hopsworks")
-        except Exception as exc:
-            print(f"[storage] Hopsworks load failed ({type(exc).__name__}): {exc}")
-        return pd.DataFrame()
+        except Exception:
+            pass
 
-    if mode == "local":
         df = load_features_local(cfg)
         if not df.empty:
-            return _store_mem_features(df, "local")
+            return _store_mem_features(_trim_features_for_serving(df), "local")
         return df
-
-    try:
-        df = _load_features_hopsworks(cfg)
-        if not df.empty:
-            return _store_mem_features(df, "hopsworks")
-    except Exception:
-        pass
-
-    df = load_features_local(cfg)
-    if not df.empty:
-        return _store_mem_features(df, "local")
-    return df

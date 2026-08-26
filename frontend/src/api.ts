@@ -229,8 +229,8 @@ function isRetriableNetworkError(message: string): boolean {
   );
 }
 
-/** Free Render cold starts often need 30–90s; retry long enough for mentors. */
-async function getJson<T>(path: string, retries = 8): Promise<T> {
+/** Retry briefly on network blips; Starter should already be awake. */
+async function getJson<T>(path: string, retries = 4): Promise<T> {
   let lastError: Error | null = null;
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
@@ -243,17 +243,17 @@ async function getJson<T>(path: string, retries = 8): Promise<T> {
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
       if (!isRetriableNetworkError(lastError.message) || attempt >= retries) break;
-      const delayMs = Math.min(attempt * 3000, 12_000);
+      const delayMs = Math.min(800 * attempt, 2500);
       await new Promise((r) => setTimeout(r, delayMs));
     }
   }
   throw lastError ?? new Error("Request failed");
 }
 
-/** Hit /health first so cold starts wake before heavier forecast calls. */
+/** Soft ping — do not block the UI on this. */
 export async function wakeApi(): Promise<boolean> {
   try {
-    await getJson<{ status: string }>("/health", 10);
+    await getJson<{ status: string }>("/health", 3);
     return true;
   } catch {
     return false;

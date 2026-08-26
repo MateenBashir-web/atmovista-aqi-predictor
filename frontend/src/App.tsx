@@ -14,7 +14,6 @@ import {
 } from "recharts";
 import {
   api,
-  wakeApi,
   type BaselineResponse,
   type City,
   type ForecastResponse,
@@ -315,7 +314,6 @@ function App() {
   });
   const [ops, setOps] = useState<OpsStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [waking, setWaking] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const [nowTick, setNowTick] = useState(0);
   const [exporting, setExporting] = useState(false);
@@ -403,36 +401,32 @@ function App() {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      setWaking(true);
-      const awake = await wakeApi();
-      if (cancelled) return;
-      setWaking(false);
-      if (!awake) {
-        setError("API_WAKE_FAILED");
-        return;
-      }
-      setError(null);
-      try {
-        const res = await api.cities();
+
+    api
+      .cities()
+      .then((res) => {
         if (cancelled) return;
         setCities(res.cities);
         if (res.cities.length) setCity(res.cities[0].name);
-      } catch (err) {
+        setError(null);
+      })
+      .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
-      }
-      api.opsStatus().then(setOps).catch(() => undefined);
-      api.leaderboard().then((l) => setLeaderboard({ winner: l.winner, models: l.models ?? [] })).catch(() => undefined);
-      api
-        .smogSeason()
-        .then((s) => {
-          setSmogSeason(s);
-          setSmogError(false);
-        })
-        .catch(() => setSmogError(true));
-      api.baseline().then(setBaseline).catch(() => undefined);
-      api.pipeline().then(setPipeline).catch(() => undefined);
-    })();
+      });
+
+    // Experts panels — load in background, don't block the everyday view.
+    api.opsStatus().then(setOps).catch(() => undefined);
+    api.leaderboard().then((l) => setLeaderboard({ winner: l.winner, models: l.models ?? [] })).catch(() => undefined);
+    api
+      .smogSeason()
+      .then((s) => {
+        setSmogSeason(s);
+        setSmogError(false);
+      })
+      .catch(() => setSmogError(true));
+    api.baseline().then(setBaseline).catch(() => undefined);
+    api.pipeline().then(setPipeline).catch(() => undefined);
+
     return () => {
       cancelled = true;
     };
@@ -872,27 +866,12 @@ function App() {
           </div>
         </nav>
 
-        {(waking || error) && (
-          <div
-            className={`status-banner ${error && !waking ? "is-error" : "is-wake"}`}
-            role="status"
-            aria-live="polite"
-          >
-            {waking ? (
-              <>
-                <span className="status-spinner" aria-hidden />
-                Starting the forecast server… first load can take a little while.
-              </>
-            ) : (
-              <>
-                <span>
-                  Couldn’t reach the forecast API. It may still be starting — wait a moment, then try again.
-                </span>
-                <button type="button" className="btn status-retry" onClick={() => window.location.reload()}>
-                  Retry now
-                </button>
-              </>
-            )}
+        {error && (
+          <div className="status-banner is-error" role="status" aria-live="polite">
+            <span>Couldn’t reach the forecast API. Check your connection, then try again.</span>
+            <button type="button" className="btn status-retry" onClick={() => window.location.reload()}>
+              Retry now
+            </button>
           </div>
         )}
 
