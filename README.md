@@ -17,9 +17,14 @@ It covers 5 cities (Lahore, Karachi, Islamabad, Peshawar, Quetta) and predicts A
 - **Frontend:** React + Vite + TypeScript
 - **Automation:** GitHub Actions (hourly features + daily training)
 - **Explainability:** SHAP
-- **Deploy:** Render for API, Vercel for frontend (planned / free tier)
+- **Deploy:** Render (API) + Vercel (frontend) — live
 
-The internship brief mentioned Streamlit or Gradio. I went with FastAPI + React instead for a proper custom UI.
+**Live demo**
+- App: https://atmovista.vercel.app
+- API: https://pearls-aqi-api-ba66.onrender.com
+- Health: https://pearls-aqi-api-ba66.onrender.com/health
+
+The internship brief mentioned Streamlit or Gradio. I went with FastAPI + React instead for a proper custom UI (okayed with mentor).
 
 ---
 
@@ -129,10 +134,17 @@ Workflows running on the repo:
 
 ## Deploy
 
-- Repo on GitHub with Actions (hourly features + daily training)
-- Frontend on Vercel (`frontend/`)
-- API on Render (`render.yaml`, `STORAGE_MODE=hopsworks`)
-- Features/models live on Hopsworks (API caches in memory; no committed parquet needed)
+Live:
+
+- Frontend: https://atmovista.vercel.app (Vercel, `frontend/`)
+- API: https://pearls-aqi-api-ba66.onrender.com (Render, free tier)
+- Features/models: Hopsworks (`STORAGE_MODE=hopsworks`)
+
+Notes:
+
+- Render free tier sleeps when idle — first open can take ~30–60s
+- `frontend/.env.production` points the Vite build at the Render API
+- Root `.env` stays local-only (Hopsworks secrets never committed)
 
 ---
 
