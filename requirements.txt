@@ -9,6 +9,7 @@ tensorflow>=2.20
 shap>=0.44
 joblib>=1.3
 hopsworks>=3.7
+nest_asyncio>=1.6
 fastapi>=0.110
 uvicorn[standard]>=0.27
 pydantic>=2.6
