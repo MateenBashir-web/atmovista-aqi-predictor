@@ -297,76 +297,157 @@ def _freshness(ts: datetime | None, ok_hours: float, warn_hours: float) -> str:
         return "yellow"
     return "red"
 
+def _parse_iso(raw: Any) -> datetime | None:
+    if not raw:
+        return None
+    try:
+        ts = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    return ts
+
+
+def _winner_artifacts_present(model_dir: Path, meta: dict[str, Any]) -> bool:
+    if meta.get("mode") == "per_horizon" or meta.get("type") == "per_horizon":
+        winners = meta.get("horizon_winners") or {}
+        if not winners:
+            return False
+        for h, h_meta in winners.items():
+            if h_meta.get("type") == "sklearn":
+                if not (model_dir / f"winner_{h}h.joblib").exists():
+                    return False
+            elif not (model_dir / f"winner_{h}h.keras").exists():
+                return False
+        return True
+    if meta.get("type") == "sklearn":
+        return (model_dir / "winner.joblib").exists()
+    return (model_dir / "winner.keras").exists()
+
+
 def pipeline_health(config: dict[str, Any] | None = None) -> dict[str, Any]:
-    from src.utils.storage import local_feature_path, resolve_storage_mode
+    from src.utils.storage import load_features, local_feature_path, resolve_storage_mode
 
     root = get_project_root()
     cfg = config or {}
+    storage = resolve_storage_mode(cfg) if cfg else "local"
+    deployed = storage == "hopsworks"
     checks: list[dict[str, Any]] = []
 
-    features_path = local_feature_path(cfg) if cfg else root / "artifacts" / "features.parquet"
-    feat_mtime = None
-    if features_path.exists():
-        feat_mtime = datetime.fromtimestamp(features_path.stat().st_mtime, tz=timezone.utc)
+    # --- Features: Hopsworks live data when deployed; local parquet otherwise ---
+    feat_updated: datetime | None = None
+    if deployed:
+        try:
+            import pandas as pd
+
+            df = load_features(cfg)
+            if df is not None and not df.empty and "event_time" in df.columns:
+                latest = pd.to_datetime(df["event_time"], utc=True).max()
+                feat_updated = latest.to_pydatetime()
+                if feat_updated.tzinfo is None:
+                    feat_updated = feat_updated.replace(tzinfo=timezone.utc)
+                feat_status = _freshness(feat_updated, ok_hours=36, warn_hours=72)
+                feat_detail = f"Hopsworks · {len(df):,} rows · latest {feat_updated.isoformat()}"
+            else:
+                feat_status = "red"
+                feat_detail = "Hopsworks feature group empty or unreachable"
+        except Exception as exc:
+            feat_status = "red"
+            feat_detail = f"Hopsworks features unavailable ({type(exc).__name__})"
+        feat_label = "Feature store (Hopsworks)"
+    else:
+        features_path = local_feature_path(cfg) if cfg else root / "artifacts" / "features.parquet"
+        if features_path.exists():
+            feat_updated = datetime.fromtimestamp(features_path.stat().st_mtime, tz=timezone.utc)
+        feat_status = _freshness(feat_updated, ok_hours=36, warn_hours=72) if feat_updated else "red"
+        feat_detail = (
+            f"Updated {feat_updated.isoformat()}"
+            if feat_updated
+            else "Features file missing — run the feature pipeline"
+        )
+        feat_label = "Feature store / local features"
     checks.append(
         {
             "id": "features",
-            "label": "Feature store / local features",
-            "status": _freshness(feat_mtime, ok_hours=36, warn_hours=72) if feat_mtime else "red",
-            "detail": (
-                f"Updated {feat_mtime.isoformat()}"
-                if feat_mtime
-                else "Features file missing — run the feature pipeline"
-            ),
-            "updated_at": feat_mtime.isoformat() if feat_mtime else None,
+            "label": feat_label,
+            "status": feat_status,
+            "detail": feat_detail,
+            "updated_at": feat_updated.isoformat() if feat_updated else None,
         }
     )
 
-    winner_path = root / "artifacts" / "models" / "winner.json"
+    # --- Model: on Render, deployed winner files matter more than training age ---
+    model_dir = root / "artifacts" / "models"
+    winner_path = model_dir / "winner.json"
     trained_at = None
     winner_name = None
+    meta: dict[str, Any] = {}
     if winner_path.exists():
         meta = json.loads(winner_path.read_text(encoding="utf-8"))
         winner_name = meta.get("name")
-        raw = meta.get("trained_at")
-        if raw:
-            trained_at = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-            if trained_at.tzinfo is None:
-                trained_at = trained_at.replace(tzinfo=timezone.utc)
+        trained_at = _parse_iso(meta.get("trained_at"))
+
+    if not winner_path.exists():
+        model_status = "red"
+        model_detail = "No winner model registered"
+    elif not _winner_artifacts_present(model_dir, meta):
+        model_status = "red"
+        model_detail = f"{winner_name or 'Winner'} registered but model files missing"
+    elif deployed:
+        # API host only gets new winner files on redeploy; don't flag age as "Needs action"
+        model_status = "green"
+        model_detail = f"{winner_name} · serving on API"
+        if trained_at and _freshness(trained_at, ok_hours=24 * 14, warn_hours=24 * 45) == "red":
+            model_status = "yellow"
+            model_detail = f"{winner_name} · serving (trained {trained_at.date().isoformat()}; redeploy to refresh)"
+    else:
+        model_status = _freshness(trained_at, ok_hours=24 * 10, warn_hours=24 * 20) if trained_at else "red"
+        model_detail = winner_name or "No winner model registered"
+
     checks.append(
         {
             "id": "model",
             "label": "Trained model",
-            "status": _freshness(trained_at, ok_hours=24 * 10, warn_hours=24 * 20) if trained_at else "red",
-            "detail": winner_name or "No winner model registered",
+            "status": model_status,
+            "detail": model_detail,
             "updated_at": trained_at.isoformat() if trained_at else None,
         }
     )
 
+    # --- Monitoring: CI/deploy snapshot on API host is expected; don't age-out as failure ---
     mon_path = root / "artifacts" / "monitoring" / "summary.json"
     mon_at = None
     mon_detail = "No monitoring summary"
+    mon_status = "yellow"
     if mon_path.exists():
         mon = json.loads(mon_path.read_text(encoding="utf-8"))
-        raw = mon.get("updated_at")
-        if raw:
-            mon_at = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-            if mon_at.tzinfo is None:
-                mon_at = mon_at.replace(tzinfo=timezone.utc)
-        scored = mon.get("scored_rows")
+        mon_at = _parse_iso(mon.get("updated_at"))
+        scored = mon.get("scored_rows") or 0
         mae = (mon.get("overall") or {}).get("mae")
-        mon_detail = f"{scored} scored rows · MAE {mae:.1f}" if mae is not None else f"{scored} scored rows"
+        mae_bit = f" · MAE {mae:.1f}" if mae is not None else ""
+        if deployed:
+            if scored:
+                mon_status = "green"
+                mon_detail = f"{scored} scored rows{mae_bit} (CI snapshot on API)"
+            else:
+                mon_status = "yellow"
+                mon_detail = "Monitoring snapshot present but no scored rows yet"
+        else:
+            mon_status = _freshness(mon_at, ok_hours=36, warn_hours=72) if mon_at else "yellow"
+            mon_detail = f"{scored} scored rows{mae_bit}" if scored or mae is not None else mon_detail
+    elif deployed:
+        mon_detail = "No monitoring snapshot on API host (hourly CI updates Hopsworks / GitHub)"
     checks.append(
         {
             "id": "monitoring",
             "label": "Live accuracy monitor",
-            "status": _freshness(mon_at, ok_hours=36, warn_hours=72) if mon_at else "yellow",
+            "status": mon_status,
             "detail": mon_detail,
             "updated_at": mon_at.isoformat() if mon_at else None,
         }
     )
 
-    storage = resolve_storage_mode(cfg) if cfg else "local"
     checks.append(
         {
             "id": "storage",
@@ -380,15 +461,7 @@ def pipeline_health(config: dict[str, Any] | None = None) -> dict[str, Any]:
     sync_path = root / "artifacts" / "hopsworks_sync_status.json"
     if sync_path.exists():
         sync = json.loads(sync_path.read_text(encoding="utf-8"))
-        sync_at = None
-        raw = sync.get("synced_at") or sync.get("updated_at") or sync.get("finished_at")
-        if raw:
-            try:
-                sync_at = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-                if sync_at.tzinfo is None:
-                    sync_at = sync_at.replace(tzinfo=timezone.utc)
-            except ValueError:
-                sync_at = None
+        sync_at = _parse_iso(sync.get("synced_at") or sync.get("updated_at") or sync.get("finished_at"))
         ok = sync.get("ok") if "ok" in sync else sync.get("success", True)
         checks.append(
             {

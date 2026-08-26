@@ -299,7 +299,9 @@ export function PipelinePanel({ data }: { data: PipelineResponse | null }) {
         </div>
         <span className={`pipeline-overall status-${data.overall}`}>{data.overall_label}</span>
       </div>
-      <p className="section-sub">Freshness of features, models, monitoring, and storage.</p>
+      <p className="section-sub">
+        Live Hopsworks feature freshness when deployed; model and monitoring reflect what the API is serving.
+      </p>
       <div className="pipeline-list">
         {data.checks.map((c) => (
           <div className={`pipeline-row status-${c.status}`} key={c.id}>
