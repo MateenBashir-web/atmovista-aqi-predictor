@@ -9,6 +9,7 @@ tensorflow>=2.15,<2.17
 shap>=0.44
 joblib>=1.3
 hopsworks==5.0.*
+hops-deltalake==1.4.0.post121
 nest_asyncio>=1.6
 fastapi>=0.110
 uvicorn[standard]>=0.27

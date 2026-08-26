@@ -130,10 +130,21 @@ def save_features(df: pd.DataFrame, config: dict[str, Any] | None = None) -> dic
         _FEATURES_MEM["source"] = "hopsworks"
         return {"mode": "hopsworks", "feature_group": fg_name, "version": fg_version, "rows": len(work)}
     except Exception as exc:
-        print(f"[storage] direct insert failed ({type(exc).__name__}); launching Hopsworks job fallback")
-        result = _sync_via_hopsworks_job(project, cfg)
-        result["direct_insert_error"] = f"{type(exc).__name__}: {exc}"
-        return result
+        print(f"[storage] direct insert failed ({type(exc).__name__}): {exc}")
+        print("[storage] launching Hopsworks job fallback")
+        try:
+            result = _sync_via_hopsworks_job(project, cfg)
+            result["direct_insert_error"] = f"{type(exc).__name__}: {exc}"
+            return result
+        except Exception as job_exc:
+            print(f"[storage] job fallback failed ({type(job_exc).__name__}): {job_exc}")
+            return {
+                "mode": "local_fallback",
+                "path": str(local_feature_path(cfg)),
+                "rows": len(work),
+                "direct_insert_error": f"{type(exc).__name__}: {exc}",
+                "job_fallback_error": f"{type(job_exc).__name__}: {job_exc}",
+            }
 
 def _mem_features() -> pd.DataFrame | None:
     df = _FEATURES_MEM.get("df")
