@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
+import time
+
 import pandas as pd
 import requests
 
@@ -31,10 +33,32 @@ WEATHER_HOURLY = [
     "surface_pressure",
 ]
 
-def _get_json(url: str, params: dict[str, Any], timeout: int = 60) -> dict[str, Any]:
-    response = requests.get(url, params=params, timeout=timeout)
-    response.raise_for_status()
-    return response.json()
+def _get_json(
+    url: str,
+    params: dict[str, Any],
+    timeout: int = 90,
+    retries: int = 4,
+) -> dict[str, Any]:
+    last_error: Exception | None = None
+    for attempt in range(1, retries + 1):
+        try:
+            response = requests.get(url, params=params, timeout=timeout)
+            response.raise_for_status()
+            return response.json()
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+            last_error = exc
+            if attempt >= retries:
+                break
+            sleep_s = min(2 ** attempt, 20)
+            time.sleep(sleep_s)
+        except requests.exceptions.HTTPError as exc:
+            last_error = exc
+            status = getattr(exc.response, "status_code", None)
+            if status is None or status < 500 or attempt >= retries:
+                raise
+            time.sleep(min(2 ** attempt, 20))
+    assert last_error is not None
+    raise last_error
 
 def _hourly_to_frame(payload: dict[str, Any], prefix: str = "") -> pd.DataFrame:
     hourly = payload.get("hourly") or {}
