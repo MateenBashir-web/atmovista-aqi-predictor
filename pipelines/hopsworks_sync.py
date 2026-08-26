@@ -37,6 +37,9 @@ def sync_features() -> dict:
     return result
 
 def register_models(config: dict | None = None) -> dict:
+    import shutil
+    import tempfile
+
     cfg = config or load_config()
     root = get_project_root()
     model_dir = root / cfg["storage"]["model_dir"]
@@ -52,23 +55,40 @@ def register_models(config: dict | None = None) -> dict:
         f"Horizons: {meta.get('horizons_hours', [24, 48, 72])}."
     )
 
-    project = get_hopsworks_project(cfg)
-    mr = project.get_model_registry()
-    model = mr.python.create_model(
-        name=cfg["model_name"],
-        metrics=metrics,
-        description=description,
-    )
-    model.save(str(model_dir))
-    version = getattr(model, "version", None)
-    print(f"[hopsworks] Model registered: {cfg['model_name']} v{version}")
-    return {
-        "registered": True,
-        "name": cfg["model_name"],
-        "version": version,
-        "metrics": metrics,
-        "winner": meta.get("name"),
-    }
+    keep_prefixes = ("winner", "horizon_winners")
+    with tempfile.TemporaryDirectory(prefix="aqi_winner_bundle_") as tmp:
+        bundle = Path(tmp) / "bundle"
+        bundle.mkdir(parents=True, exist_ok=True)
+        copied = []
+        for path in sorted(model_dir.iterdir()):
+            if not path.is_file():
+                continue
+            if not path.name.startswith(keep_prefixes):
+                continue
+            shutil.copy2(path, bundle / path.name)
+            copied.append(path.name)
+        if not copied:
+            raise FileNotFoundError(f"No winner model files found in {model_dir}")
+
+        print(f"[hopsworks] Registering winner bundle ({len(copied)} files): {copied}")
+        project = get_hopsworks_project(cfg)
+        mr = project.get_model_registry()
+        model = mr.python.create_model(
+            name=cfg["model_name"],
+            metrics=metrics,
+            description=description,
+        )
+        model.save(str(bundle))
+        version = getattr(model, "version", None)
+        print(f"[hopsworks] Model registered: {cfg['model_name']} v{version}")
+        return {
+            "registered": True,
+            "name": cfg["model_name"],
+            "version": version,
+            "metrics": metrics,
+            "winner": meta.get("name"),
+            "files": copied,
+        }
 
 def verify_hopsworks(config: dict | None = None) -> dict:
     cfg = config or load_config()
