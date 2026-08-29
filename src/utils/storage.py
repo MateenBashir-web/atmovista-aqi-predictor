@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import os
 import threading
 import time
@@ -13,15 +14,19 @@ from .config import get_project_root, load_config
 _FEATURES_MEM: dict[str, Any] = {}
 _FEATURES_MEM_TTL_SEC = 3600.0  # features refresh hourly; keep warm between requests
 _FEATURES_LOAD_LOCK = threading.Lock()
-# Inference + ~7-day history only need recent rows; full FG OOMs Starter (512MB).
-_FEATURES_KEEP_PER_CITY = 336
+_HOPSWORKS_PROJECT = None
+# Inference needs ~72h lags; 7 days of hourly rows is enough for history + forecast.
+_FEATURES_KEEP_PER_CITY = 168
+_SERVE_LOOKBACK_DAYS = int(os.getenv("FEATURE_SERVE_DAYS", "7"))
 
 
 def _trim_features_for_serving(df: pd.DataFrame) -> pd.DataFrame:
     if df is None or df.empty or "city" not in df.columns or "event_time" not in df.columns:
         return df
-    work = df.copy()
-    work["event_time"] = pd.to_datetime(work["event_time"], utc=True)
+    work = df
+    if not pd.api.types.is_datetime64_any_dtype(work["event_time"]):
+        work = df.copy()
+        work["event_time"] = pd.to_datetime(work["event_time"], utc=True)
     work = work.sort_values(["city", "event_time"])
     trimmed = work.groupby("city", group_keys=False).tail(_FEATURES_KEEP_PER_CITY)
     return trimmed.reset_index(drop=True)
@@ -63,6 +68,10 @@ def load_features_local(config: dict[str, Any] | None = None) -> pd.DataFrame:
     return pd.read_parquet(path)
 
 def get_hopsworks_project(config: dict[str, Any] | None = None):
+    global _HOPSWORKS_PROJECT
+    if _HOPSWORKS_PROJECT is not None:
+        return _HOPSWORKS_PROJECT
+
     cfg = config or load_config()
     api_key = os.getenv("HOPSWORKS_API_KEY")
     if not api_key:
@@ -72,7 +81,8 @@ def get_hopsworks_project(config: dict[str, Any] | None = None):
 
     project_name = os.getenv("HOPSWORKS_PROJECT") or cfg["hopsworks"]["project_name"]
     host = os.getenv("HOPSWORKS_HOST") or cfg["hopsworks"].get("host") or "c.app.hopsworks.ai"
-    return hopsworks.login(host=host, project=project_name, api_key_value=api_key)
+    _HOPSWORKS_PROJECT = hopsworks.login(host=host, project=project_name, api_key_value=api_key)
+    return _HOPSWORKS_PROJECT
 
 def _sync_via_hopsworks_job(project, config: dict[str, Any]) -> dict[str, Any]:
     ds = project.get_dataset_api()
@@ -176,6 +186,8 @@ def _store_mem_features(df: pd.DataFrame, source: str) -> pd.DataFrame:
     return df
 
 def _load_features_hopsworks(cfg: dict[str, Any]) -> pd.DataFrame:
+    from datetime import datetime, timedelta, timezone
+
     project = get_hopsworks_project(cfg)
     fs = project.get_feature_store()
     fg = fs.get_feature_group(
@@ -183,35 +195,24 @@ def _load_features_hopsworks(cfg: dict[str, Any]) -> pd.DataFrame:
         version=cfg.get("feature_group_version", 2),
     )
     errors: list[str] = []
+    cutoff = datetime.now(timezone.utc) - timedelta(days=_SERVE_LOOKBACK_DAYS)
 
     def _try_read(label: str, reader):
-        df = reader()
-        if df is not None and not getattr(df, "empty", True):
-            trimmed = _trim_features_for_serving(df)
-            print(
-                f"[storage] Hopsworks features via {label}: "
-                f"{len(df)} raw → {len(trimmed)} kept for serving"
-            )
-            return trimmed
-        errors.append(f"{label}: empty")
-        return None
+        raw = reader()
+        if raw is None or getattr(raw, "empty", True):
+            errors.append(f"{label}: empty")
+            return None
+        trimmed = _trim_features_for_serving(raw)
+        print(
+            f"[storage] Hopsworks features via {label}: "
+            f"{len(raw)} raw → {len(trimmed)} kept for serving"
+        )
+        del raw
+        gc.collect()
+        return trimmed
 
-    # Prefer a time-filtered read when the FG supports it (much less data over the wire).
-    try:
-        from datetime import datetime, timedelta, timezone
-
-        cutoff = datetime.now(timezone.utc) - timedelta(days=14)
-        if hasattr(fg, "event_time") or "event_time" in getattr(fg, "features", []):
-            filtered = fg.filter(fg.event_time >= cutoff)
-            got = _try_read("filtered_14d", filtered.read)
-            if got is not None:
-                return got
-    except Exception as exc:
-        errors.append(f"filtered_14d: {type(exc).__name__}: {exc}")
-
+    # Online store is smallest — try first on the 512MB API instance.
     for label, reader in (
-        ("select_all", lambda: fg.select_all().read()),
-        ("offline", lambda: fg.read()),
         ("online", lambda: fg.read(online=True)),
     ):
         try:
@@ -220,7 +221,17 @@ def _load_features_hopsworks(cfg: dict[str, Any]) -> pd.DataFrame:
                 return got
         except Exception as exc:
             errors.append(f"{label}: {type(exc).__name__}: {exc}")
-    raise RuntimeError("; ".join(errors) if errors else "No feature rows returned")
+
+    try:
+        filtered = fg.filter(fg.event_time >= cutoff)
+        got = _try_read("filtered_recent", filtered.read)
+        if got is not None:
+            return got
+    except Exception as exc:
+        errors.append(f"filtered_recent: {type(exc).__name__}: {exc}")
+
+    # Never pull the full offline FG on the API — it OOMs Starter (512MB).
+    raise RuntimeError("; ".join(errors) if errors else "No recent feature rows returned")
 
 def load_features(config: dict[str, Any] | None = None) -> pd.DataFrame:
     cfg = config or load_config()

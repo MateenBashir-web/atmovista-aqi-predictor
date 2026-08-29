@@ -338,24 +338,25 @@ def pipeline_health(config: dict[str, Any] | None = None) -> dict[str, Any]:
     # --- Features: Hopsworks live data when deployed; local parquet otherwise ---
     feat_updated: datetime | None = None
     if deployed:
+        feat_label = "Feature store (Hopsworks)"
+        feat_status = "yellow"
+        feat_detail = "Feature cache warming (loads on first forecast)"
         try:
-            import pandas as pd
+            from src.utils.storage import _mem_features
 
-            df = load_features(cfg)
-            if df is not None and not df.empty and "event_time" in df.columns:
-                latest = pd.to_datetime(df["event_time"], utc=True).max()
+            cached = _mem_features()
+            if cached is not None and not cached.empty and "event_time" in cached.columns:
+                import pandas as pd
+
+                latest = pd.to_datetime(cached["event_time"], utc=True).max()
                 feat_updated = latest.to_pydatetime()
                 if feat_updated.tzinfo is None:
                     feat_updated = feat_updated.replace(tzinfo=timezone.utc)
                 feat_status = _freshness(feat_updated, ok_hours=36, warn_hours=72)
-                feat_detail = f"Hopsworks · {len(df):,} rows · latest {feat_updated.isoformat()}"
-            else:
-                feat_status = "red"
-                feat_detail = "Hopsworks feature group empty or unreachable"
+                feat_detail = f"Hopsworks · {len(cached):,} rows cached · latest {feat_updated.isoformat()}"
         except Exception as exc:
-            feat_status = "red"
-            feat_detail = f"Hopsworks features unavailable ({type(exc).__name__})"
-        feat_label = "Feature store (Hopsworks)"
+            feat_status = "yellow"
+            feat_detail = f"Feature cache unavailable ({type(exc).__name__})"
     else:
         features_path = local_feature_path(cfg) if cfg else root / "artifacts" / "features.parquet"
         if features_path.exists():

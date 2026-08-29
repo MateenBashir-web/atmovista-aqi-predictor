@@ -4,7 +4,7 @@ services:
     runtime: python
     plan: starter
     buildCommand: pip install -r requirements-api.txt
-    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT --workers 1 --limit-concurrency 20
     envVars:
       - key: STORAGE_MODE
         value: hopsworks
