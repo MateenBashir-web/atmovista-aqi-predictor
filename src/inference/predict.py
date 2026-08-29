@@ -17,6 +17,7 @@ from src.features.realistic import apply_interval
 from src.utils.aqi_bands import aqi_category, aqi_color, is_hazardous_alert
 from src.utils.config import get_project_root, load_config
 from src.utils.storage import load_features
+from src.utils.timezone import latest_observed_row
 
 _WINNER_MEM: dict[str, Any] = {}
 _PREDICT_MEM: dict[str, tuple[float, dict[str, Any]]] = {}
@@ -236,7 +237,7 @@ def _predict_city_uncached(city: str, config: dict[str, Any] | None = None) -> d
     if city_df.empty:
         raise ValueError(f"No data for city={city}")
 
-    current = city_df.iloc[-1].copy()
+    current = latest_observed_row(city_df).copy()
     current_aqi = float(current["aqi"]) if pd.notna(current.get("aqi")) else None
     event_time = pd.to_datetime(current["event_time"], utc=True)
 
@@ -332,7 +333,7 @@ def _predict_city_uncached(city: str, config: dict[str, Any] | None = None) -> d
     return {
         "city": city,
         "model": model_label,
-        "event_time": str(current["event_time"]),
+        "event_time": pd.to_datetime(current["event_time"], utc=True).isoformat(),
         "current_aqi": round(current_aqi, 1) if current_aqi is not None else None,
         "current_category": aqi_category(current_aqi),
         "current_color": aqi_color(current_aqi),
@@ -341,7 +342,10 @@ def _predict_city_uncached(city: str, config: dict[str, Any] | None = None) -> d
 
 def history_for_city(city: str, hours: int = 168, config: dict[str, Any] | None = None) -> list[dict]:
     df = load_features(config)
-    city_df = df[df["city"] == city].sort_values("event_time").tail(hours)
+    city_df = df[df["city"] == city].sort_values("event_time")
+    times = pd.to_datetime(city_df["event_time"], utc=True)
+    now = pd.Timestamp.now(tz="UTC").floor("h")
+    city_df = city_df[times <= now].tail(hours)
     rows = []
     for _, row in city_df.iterrows():
         aqi = float(row["aqi"]) if pd.notna(row.get("aqi")) else None
@@ -389,7 +393,7 @@ def current_weather_for_city(city: str, config: dict[str, Any] | None = None) ->
     if city_df.empty:
         raise ValueError(f"No data for city={city}")
 
-    row = city_df.iloc[-1]
+    row = latest_observed_row(city_df)
     temperature = None if pd.isna(row.get("temperature_2m")) else float(row["temperature_2m"])
     humidity = None if pd.isna(row.get("relative_humidity_2m")) else float(row["relative_humidity_2m"])
     wind_speed = None if pd.isna(row.get("wind_speed_10m")) else float(row["wind_speed_10m"])

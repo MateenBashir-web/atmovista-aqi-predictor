@@ -18,6 +18,7 @@ from src.inference.predict import (
     load_winner,
     predict_city,
 )
+from src.utils.timezone import latest_observed_row
 from src.inference.explain import explain_city
 from src.insights.creative import (
     exercise_advice,
@@ -160,14 +161,14 @@ def snapshots():
             city_df = work[work["city"] == name].sort_values("event_time")
             if city_df.empty:
                 continue
-            last = city_df.iloc[-1]
+            last = latest_observed_row(city_df)
             aqi = float(last["aqi"]) if pd.notna(last.get("aqi")) else None
             rows[name] = {
                 "city": name,
                 "current_aqi": None if aqi is None else round(aqi, 1),
                 "current_category": aqi_category(aqi),
                 "current_color": aqi_color(aqi),
-                "event_time": str(last["event_time"]),
+                "event_time": pd.to_datetime(last["event_time"], utc=True).isoformat(),
             }
         return {"snapshots": rows}
 

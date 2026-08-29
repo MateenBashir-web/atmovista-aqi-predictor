@@ -39,7 +39,7 @@ import { useViewMode } from "./hooks/useViewMode";
 import { useWatchlist } from "./hooks/useWatchlist";
 import { AQI_LEGEND } from "./utils/aqiLegend";
 import { exportForecastPng } from "./utils/exportCard";
-import { formatRelativeTime, formatHorizonDay, formatHorizonChartLabel, formatDayLabel, parseHorizonHours } from "./utils/time";
+import { formatRelativeTime, formatHorizonDay, formatHorizonChartLabel, formatDayLabel, formatDateTime, formatChartDateTime, parseHorizonHours } from "./utils/time";
 import "./index.css";
 
 const GAUGE_MAX = 300;
@@ -456,11 +456,7 @@ function App() {
       history
         .filter((p) => p.aqi != null)
         .map((p) => ({
-          time: new Date(p.event_time).toLocaleString(undefined, {
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-          }),
+          time: formatChartDateTime(p.event_time),
           aqi: p.aqi,
         })),
     [history],
@@ -509,12 +505,7 @@ function App() {
   void nowTick;
 
   const updatedRelative = formatRelativeTime(forecast?.event_time);
-  const updatedExact = forecast?.event_time
-    ? new Date(forecast.event_time).toLocaleString(undefined, {
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
-    : "—";
+  const updatedExact = formatDateTime(forecast?.event_time);
 
   const downloadForecastTxt = () => {
     if (!forecast) return;
@@ -1540,7 +1531,7 @@ function App() {
             <span className="ops-icon">◷</span>
             Trained{" "}
             <strong>
-              {ops?.last_train_at ? new Date(ops.last_train_at).toLocaleDateString() : "—"}
+              {ops?.last_train_at ? formatDayLabel(ops.last_train_at) : "—"}
             </strong>
           </span>
           <span className="ops-pill">
@@ -1548,7 +1539,7 @@ function App() {
             Sync{" "}
             <strong>
               {ops?.features_updated_at
-                ? new Date(ops.features_updated_at * 1000).toLocaleDateString()
+                ? formatDayLabel(new Date(ops.features_updated_at * 1000))
                 : "—"}
             </strong>
           </span>

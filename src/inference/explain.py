@@ -8,6 +8,7 @@ import pandas as pd
 from src.inference.predict import load_horizon_bundle
 from src.utils.config import load_config
 from src.utils.storage import load_features
+from src.utils.timezone import latest_observed_row
 
 def _load_city_slice(
     city: str,
@@ -21,7 +22,7 @@ def _load_city_slice(
     city_df = df[df["city"] == city].sort_values("event_time")
     if city_df.empty:
         raise ValueError(f"No rows for city={city}")
-    latest_ts = str(city_df.iloc[-1]["event_time"])
+    latest_ts = pd.to_datetime(latest_observed_row(city_df)["event_time"], utc=True).isoformat()
     frame = city_df[["city", *feature_cols]].copy()
     for col in feature_cols:
         frame[col] = pd.to_numeric(frame[col], errors="coerce")

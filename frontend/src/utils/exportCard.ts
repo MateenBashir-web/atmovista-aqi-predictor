@@ -1,5 +1,6 @@
 import { BRAND } from "../brand";
 import type { ForecastResponse } from "../api";
+import { addHours, formatDateTime, formatDayLabel } from "./time";
 
 function roundRect(
   ctx: CanvasRenderingContext2D,
@@ -82,13 +83,9 @@ export async function exportForecastPng(forecast: ForecastResponse): Promise<voi
     ctx.fillStyle = "#8b9db5";
     ctx.font = "600 14px Sora, sans-serif";
     ctx.fillText(`+${f.horizon_hours}h`, x + 18, y + 28);
-    const day = new Date(new Date(forecast.event_time).getTime() + f.horizon_hours * 3600000);
+    const day = addHours(forecast.event_time, f.horizon_hours);
     ctx.font = "500 12px Sora, sans-serif";
-    ctx.fillText(
-      day.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }),
-      x + 18,
-      y + 46,
-    );
+    ctx.fillText(day ? formatDayLabel(day) : "—", x + 18, y + 46);
 
     ctx.fillStyle = f.color || accent;
     ctx.font = "700 32px Fraunces, Georgia, serif";
@@ -101,7 +98,7 @@ export async function exportForecastPng(forecast: ForecastResponse): Promise<voi
 
   ctx.fillStyle = "#8b9db5";
   ctx.font = "500 13px Sora, sans-serif";
-  ctx.fillText(`Updated ${new Date(forecast.event_time).toLocaleString()}`, 48, H - 28);
+  ctx.fillText(`Updated ${formatDateTime(forecast.event_time)}`, 48, H - 28);
 
   await new Promise<void>((resolve) => {
     canvas.toBlob((blob) => {
