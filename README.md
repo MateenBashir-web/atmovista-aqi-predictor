@@ -16,8 +16,8 @@ It covers 5 cities (Lahore, Karachi, Islamabad, Peshawar, Quetta) and predicts A
 - **Backend:** FastAPI
 - **Frontend:** React + Vite + TypeScript
 - **Automation:** GitHub Actions (hourly features + daily training)
-- **Explainability:** SHAP
-- **Deploy:** Render (API) + Vercel (frontend) — live
+- **Explainability:** SHAP (per-horizon, signed drivers, waterfall, narrative)
+- **Deploy:** Render (API, Standard) + Vercel (frontend) — live
 
 **Live demo**
 - App: https://atmovista.vercel.app
@@ -102,7 +102,9 @@ Most of these take `?city=Lahore` (or another city):
 - `/aqi/forecast`
 - `/aqi/history`
 - `/aqi/weather`
-- `/aqi/explain` (SHAP)
+- `/aqi/explain` (SHAP: 24/48/72h, signed local, waterfall, narrative)
+- `/aqi/explain/compare` (SHAP drivers by city)
+- `/aqi/explain/global` (training-time global SHAP summary)
 - `/aqi/alerts`
 - `/aqi/health-tips`
 - `/models/leaderboard`
@@ -115,8 +117,8 @@ Most of these take `?city=Lahore` (or another city):
 
 Two modes:
 
-- **For you** — map, current AQI, 3-day forecast, weather, health tips, alerts, exercise advice
-- **For experts** — leaderboard, SHAP, baseline comparison, pipeline status, live accuracy
+- **For you** — map, current AQI, 3-day forecast, weather + pollutant breakdown, health tips, alerts, exercise advice
+- **For experts** — leaderboard, per-horizon SHAP (signed + waterfall + narrative), city compare, global drivers, baseline, pipeline status, live accuracy
 
 ---
 
@@ -137,12 +139,12 @@ Workflows running on the repo:
 Live:
 
 - Frontend: https://atmovista.vercel.app (Vercel, `frontend/`)
-- API: https://pearls-aqi-api-ba66.onrender.com (Render, free tier)
+- API: https://pearls-aqi-api-ba66.onrender.com (Render Standard)
 - Features/models: Hopsworks (`STORAGE_MODE=hopsworks`)
 
 Notes:
 
-- Render free tier sleeps when idle — first open can take ~30–60s
+- API currently runs on Render Standard for reliable mentor review (can downgrade later)
 - `frontend/.env.production` points the Vite build at the Render API
 - Root `.env` stays local-only (Hopsworks secrets never committed)
 

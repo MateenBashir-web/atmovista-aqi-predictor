@@ -232,8 +232,8 @@ def main() -> None:
             ["Orchestration", "GitHub Actions", "Free CI/CD alternative to Airflow"],
             ["API", "FastAPI", "Backend for serving forecasts"],
             ["UI", "React + Vite + TypeScript", "Mentor-approved custom frontend"],
-            ["Explainability", "SHAP", "Required XAI"],
-            ["Deploy", "Render + Vercel", "Free-tier production hosting"],
+            ["Explainability", "SHAP (local + global)", "Per-horizon signed drivers / XAI"],
+            ["Deploy", "Render + Vercel", "Production hosting (Render Standard for demo)"],
         ],
         col_widths=(1.1, 1.4, 1.5),
     )
@@ -474,7 +474,7 @@ def main() -> None:
             ["Weather", "Temperature, humidity, wind, pollutant driver"],
             ["Health tips / exercise", "Practical guidance"],
             ["Alerts", "Hazardous / unhealthy warnings"],
-            ["Explain", "SHAP explanations"],
+            ["Explain", "Per-horizon SHAP, waterfall, narrative, city compare"],
             ["Leaderboard / ops / monitoring", "Model and pipeline health"],
         ],
         col_widths=(1.6, 2.4),
@@ -497,7 +497,7 @@ def main() -> None:
     for item in [
         "Pakistan live map + city rankings",
         "Current AQI gauge with category bands",
-        "Weather strip, pollutant insight, 3-day outlook with calendar dates",
+        "Weather strip, pollutant breakdown, 3-day outlook with calendar dates",
         "Confidence / peak / improvement insights",
         "Health tips, alerts, exercise advice, smog season panel, city watchlist",
     ]:
@@ -506,7 +506,9 @@ def main() -> None:
     for item in [
         "Ops strip (storage mode, model, sync)",
         "Beat-the-baseline panel and pipeline health board",
-        "Model leaderboard and SHAP explanations",
+        "Model leaderboard",
+        "XAI: per-horizon SHAP, signed local drivers, waterfall, narrative",
+        "Global drivers, city SHAP compare, glossary hover, pollutant link",
         "Live accuracy table (forecast vs actual)",
     ]:
         bullet(pdf, item)
@@ -526,15 +528,26 @@ def main() -> None:
 
     # 15
     h2(pdf, "15. Explainability (SHAP)")
-    body(pdf, "Implemented in src/inference/explain.py and shown in the expert dashboard.")
+    body(
+        pdf,
+        "Implemented in src/inference/explain.py and shown in the expert dashboard "
+        "(/aqi/explain, plus compare/global helpers).",
+    )
     draw_table(
         pdf,
         [
             ["View", "Purpose"],
-            ["City-level importance", "Which features generally drive forecasts for a city"],
-            ["Local explanation", "Why the latest forecast is high or low right now"],
+            ["Per-horizon tabs", "Separate explanations for +24h, +48h, and +72h winners"],
+            ["City-level importance", "Mean |SHAP| over recent city rows"],
+            ["Signed local explanation", "Latest-hour SHAP with direction (raises / lowers AQI)"],
+            ["Waterfall", "Step path from baseline value to predicted AQI"],
+            ["Plain-language narrative", "Short sentence summarizing the top drivers"],
+            ["Global training drivers", "Surfaces artifacts/shap_summary.json from training"],
+            ["City compare", "Top SHAP drivers across Pakistan cities"],
+            ["Feature glossary", "Hover tooltips for lag / weather / pollutant names"],
+            ["Pollutant link", "Whether live chemistry and SHAP agree on signal family"],
         ],
-        col_widths=(1.4, 2.6),
+        col_widths=(1.5, 2.5),
     )
     body(
         pdf,
@@ -564,7 +577,7 @@ def main() -> None:
         [
             ["Service", "Platform", "Status"],
             ["AtmoVista frontend", "Vercel", "Deployed"],
-            ["FastAPI backend", "Render (render.yaml)", "Deployed"],
+            ["FastAPI backend", "Render (Standard for reliable demo)", "Deployed"],
             ["Feature store / models", "Hopsworks", "Live source of truth"],
         ],
         col_widths=(1.4, 1.4, 1.2),
@@ -585,7 +598,8 @@ def main() -> None:
             ["Addition", "Why it helps"],
             ["5 Pakistan cities", "Broader coverage than a single-city demo"],
             ["Dual audience UI", "Everyday users and technical reviewers"],
-            ["Live weather + pollutant driver", "Context around the AQI number"],
+            ["Live weather + pollutant breakdown", "Context around the AQI number"],
+            ["Richer XAI (signed SHAP, waterfall, narrative)", "Clearer trust for technical reviewers"],
             ["Prediction confidence bands", "Uncertainty communication"],
             ["Peak / improvement insights", "Actionable short-term planning"],
             ["Smog season calendar", "Seasonal awareness"],
@@ -603,7 +617,8 @@ def main() -> None:
     for item in [
         "Open-Meteo AQI is model-based and may differ from local ground stations.",
         "Longer horizons (+48h / +72h) have higher error by nature.",
-        "Free-tier Hopsworks / Render / Vercel limits can affect latency and cold starts.",
+        "Hopsworks free-plan usage limits, and hosting plan choices (Render/Vercel), "
+        "can still affect latency and cost if left on always-on Standard longer than needed.",
         "LSTM was trained and compared, but classical models currently win most horizons.",
     ]:
         bullet(pdf, item)

@@ -98,8 +98,8 @@ AtmoVista follows this flow in production:
 | Orchestration | GitHub Actions | Free CI/CD alternative to Airflow |
 | API | FastAPI | Backend for serving forecasts |
 | UI | React + Vite + TypeScript | Mentor-approved custom frontend |
-| Explainability | SHAP | Required XAI |
-| Deploy | Render + Vercel | Free-tier friendly production hosting |
+| Explainability | SHAP (local + global) | Required XAI; per-horizon signed drivers |
+| Deploy | Render + Vercel | Production hosting (Render Standard for demo reliability) |
 
 ---
 
@@ -313,7 +313,7 @@ API module: `api/main.py`
 | Weather | Temperature, humidity, wind, pollutant driver |
 | Health tips / exercise | Practical guidance |
 | Alerts | Hazardous / unhealthy warnings |
-| Explain | SHAP explanations |
+| Explain | Per-horizon SHAP (signed, waterfall, narrative) + city compare + global summary |
 | Leaderboard / ops / monitoring | Model and pipeline health |
 
 ### Prediction flow
@@ -335,8 +335,8 @@ Built with React + Vite + TypeScript and deployed on Vercel.
 
 - Pakistan live map + city rankings
 - Current AQI gauge with category bands
-- Weather strip (temperature / humidity / wind)
-- Weather + pollutant insight ribbons
+- Weather strip (temperature / humidity / wind / clouds / rain / pressure)
+- Pollutant breakdown bars + dominant pollutant insight
 - Next 3 days outlook with calendar dates
 - Confidence / peak / improvement insights
 - Health tips, watch-ahead cards, alerts
@@ -349,7 +349,9 @@ Built with React + Vite + TypeScript and deployed on Vercel.
 - Beat-the-baseline panel
 - Pipeline health board
 - Model leaderboard
-- SHAP city-level + local explanations
+- XAI: per-horizon SHAP (+24h / +48h / +72h), signed local drivers, waterfall, narrative
+- Global training drivers, city SHAP compare, feature glossary on hover
+- Pollutant ↔ SHAP agreement note
 - Live accuracy table (forecast vs actual)
 
 ### UX extras
@@ -373,12 +375,19 @@ Built with React + Vite + TypeScript and deployed on Vercel.
 
 ## 15. Explainability (SHAP)
 
-Implemented in `src/inference/explain.py` and shown in the expert dashboard.
+Implemented in `src/inference/explain.py` and shown in the expert dashboard (`/aqi/explain`, plus compare/global helpers).
 
 | View | Purpose |
 |---|---|
-| City-level importance | Which features generally drive forecasts for a city |
-| Local explanation | Why the latest forecast is high or low right now |
+| Per-horizon tabs | Separate explanations for +24h, +48h, and +72h winners |
+| City-level importance | Mean \|SHAP\| over recent city rows — which features generally matter |
+| Signed local explanation | Latest-hour SHAP with direction (↑ raises AQI, ↓ lowers AQI) |
+| Waterfall | Step path from baseline value to the predicted AQI |
+| Plain-language narrative | Short sentence summarizing the top drivers |
+| Global training drivers | Surfaces `artifacts/shap_summary.json` from the latest training run |
+| City compare | Top SHAP drivers side-by-side across Pakistan cities |
+| Feature glossary | Hover tooltips explain lag / weather / pollutant feature names |
+| Pollutant link | Notes whether live chemistry and SHAP drivers point to the same family of signals |
 
 Typical important drivers include recent AQI/PM lags, rolling AQI statistics, and weather-linked features.
 
@@ -407,7 +416,7 @@ Repository secrets used by Actions:
 | Service | Platform | Status |
 |---|---|---|
 | AtmoVista frontend | Vercel | Deployed |
-| FastAPI backend | Render (`render.yaml`) | Deployed |
+| FastAPI backend | Render (`render.yaml`, Standard for reliable demo) | Deployed |
 | Feature store / model registry | Hopsworks | Live production source of truth |
 
 Production configuration:
@@ -424,7 +433,8 @@ Production configuration:
 |---|---|
 | 5 Pakistan cities | Broader coverage than a single-city demo |
 | Dual audience UI | Everyday users and technical reviewers |
-| Live weather + pollutant driver | Context around the AQI number |
+| Live weather + pollutant breakdown | Context around the AQI number |
+| Richer XAI (signed SHAP, waterfall, narrative) | Clearer trust for technical reviewers |
 | Prediction confidence bands | Uncertainty communication |
 | Peak / improvement insights | Actionable short-term planning |
 | Smog season calendar | Seasonal awareness |
@@ -440,7 +450,7 @@ Production configuration:
 
 1. Open-Meteo AQI is model-based and may differ from local ground stations.
 2. Longer horizons (+48h / +72h) have higher error by nature.
-3. Free-tier Hopsworks / Render / Vercel limits can affect latency and cold starts.
+3. Hopsworks free-plan usage limits, and hosting plan choices (Render/Vercel), can still affect latency and cost if left on always-on Standard longer than needed.
 4. Deep learning (LSTM) was trained and compared, but classical models currently win most horizons on this dataset.
 
 ---
