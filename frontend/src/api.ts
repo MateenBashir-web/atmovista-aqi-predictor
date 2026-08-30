@@ -71,6 +71,81 @@ export type AlertItem = {
   message: string;
 };
 
+export type ExplainFeature = {
+  feature: string;
+  importance: number;
+  contribution?: number;
+  direction?: "up" | "down" | "neutral";
+  glossary?: string;
+  raw_feature?: string;
+};
+
+export type ExplainWaterfall = {
+  base_value: number;
+  prediction: number;
+  residual?: number;
+  steps: {
+    feature: string;
+    contribution: number;
+    direction?: string;
+    glossary?: string;
+    before: number;
+    after: number;
+  }[];
+};
+
+export type ExplainHorizonPack = {
+  available: boolean;
+  horizon_hours?: number;
+  model?: string;
+  method?: string;
+  local_method?: string;
+  note?: string;
+  error?: string;
+  prediction?: number;
+  event_time?: string;
+  top_features?: ExplainFeature[];
+  local_features?: ExplainFeature[];
+  local_signed?: ExplainFeature[];
+  waterfall?: ExplainWaterfall | null;
+  narrative?: string;
+  pollutant_link?: {
+    shap_pollutant_features?: { feature: string; key: string; direction: string }[];
+    dominant_pollutant?: string | null;
+    agree?: boolean;
+    note?: string;
+  };
+};
+
+export type ExplainResponse = ExplainHorizonPack & {
+  city?: string;
+  horizon?: string;
+  horizon_hours?: number;
+  horizons?: Record<string, ExplainHorizonPack>;
+  horizons_hours?: number[];
+  global_summary?: {
+    available: boolean;
+    method?: string;
+    note?: string;
+    top_features?: ExplainFeature[];
+  };
+  glossary?: Record<string, string>;
+};
+
+export type ExplainCompareResponse = {
+  available: boolean;
+  horizon_hours: number;
+  note?: string;
+  cities: {
+    city: string;
+    available: boolean;
+    prediction?: number;
+    narrative?: string;
+    top_features?: ExplainFeature[];
+    error?: string;
+  }[];
+};
+
 export type LeaderboardModel = {
   name: string;
   type: string;
@@ -284,16 +359,17 @@ export const api = {
     getJson<{ city: string; alerts: AlertItem[]; has_alerts: boolean }>(
       `/aqi/alerts?city=${encodeURIComponent(city)}`,
     ),
-  explain: (city: string) =>
-    getJson<{
-      available: boolean;
-      city?: string;
-      method?: string;
-      local_method?: string;
-      note?: string;
-      top_features?: { feature: string; importance: number }[];
-      local_features?: { feature: string; importance: number }[];
-    }>(`/aqi/explain?city=${encodeURIComponent(city)}`),
+  explain: (city: string, opts?: { horizon?: number; allHorizons?: boolean }) => {
+    const horizon = opts?.horizon ?? 24;
+    const all = opts?.allHorizons ?? true;
+    return getJson<ExplainResponse>(
+      `/aqi/explain?city=${encodeURIComponent(city)}&horizon=${horizon}&all_horizons=${all}`,
+    );
+  },
+  explainCompare: (horizon = 24) =>
+    getJson<ExplainCompareResponse>(`/aqi/explain/compare?horizon=${horizon}`),
+  explainGlobal: () =>
+    getJson<ExplainResponse["global_summary"] & object>(`/aqi/explain/global`),
   leaderboard: () =>
     getJson<{ available: boolean; winner?: string; models: LeaderboardModel[] }>("/models/leaderboard"),
   healthTips: (city: string) =>

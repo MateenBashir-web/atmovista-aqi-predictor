@@ -4,6 +4,9 @@ import {
   type AlertItem,
   type ExerciseResponse,
   type ExplainAqiResponse,
+  type ExplainCompareResponse,
+  type ExplainFeature,
+  type ExplainResponse,
   type ForecastResponse,
   type HealthTipsResponse,
   type HistoryPoint,
@@ -21,9 +24,11 @@ export type CityDataState = {
   exercise: ExerciseResponse | null;
   explainAqi: ExplainAqiResponse | null;
   weather: WeatherResponse | null;
-  shap: { feature: string; importance: number }[];
-  localShap: { feature: string; importance: number }[];
-  explainMeta: { method?: string; note?: string };
+  shap: ExplainFeature[];
+  localShap: ExplainFeature[];
+  localSigned: ExplainFeature[];
+  explain: ExplainResponse | null;
+  explainMeta: { method?: string; note?: string; narrative?: string };
   monitoring: MonitoringSummary | null;
 };
 
@@ -48,6 +53,8 @@ const EMPTY: CityDataState = {
   weather: null,
   shap: [],
   localShap: [],
+  localSigned: [],
+  explain: null,
   explainMeta: {},
   monitoring: null,
 };
@@ -61,6 +68,31 @@ function shortenFeature(name: string): string {
     .replace(/_fwd_\d+h$/, " (fwd)")
     .replace(/_/g, " ")
     .slice(0, 28);
+}
+
+function mapFeatures(list?: ExplainFeature[]): ExplainFeature[] {
+  return (list ?? []).map((x) => ({
+    ...x,
+    feature: shortenFeature(x.feature),
+    contribution: x.contribution ?? (x.direction === "down" ? -Math.abs(x.importance) : x.importance),
+    importance: x.importance ?? Math.abs(x.contribution ?? 0),
+  }));
+}
+
+function packFromExplain(explain: ExplainResponse, horizonHours: number): Partial<CityDataState> {
+  const pack = explain.horizons?.[String(horizonHours)] ?? explain;
+  const localSigned = mapFeatures(pack.local_signed ?? pack.local_features);
+  return {
+    explain,
+    shap: mapFeatures(pack.top_features),
+    localShap: mapFeatures(pack.local_features),
+    localSigned,
+    explainMeta: {
+      method: pack.method ?? explain.method,
+      note: pack.note ?? explain.note,
+      narrative: pack.narrative ?? explain.narrative,
+    },
+  };
 }
 
 function previewFromSnapshot(city: string, snap: CitySnapshot): ForecastResponse {
@@ -93,12 +125,15 @@ function patchCache(city: string, patch: Partial<CityDataState>) {
 
 type Options = {
   snapshot?: CitySnapshot;
+  shapHorizon?: number;
 };
 
 export function useCityData(city: string, options: Options = {}) {
-  const { snapshot } = options;
+  const { snapshot, shapHorizon = 24 } = options;
   const requestId = useRef(0);
   const hasBooted = useRef(false);
+  const shapHorizonRef = useRef(shapHorizon);
+  shapHorizonRef.current = shapHorizon;
 
   const [data, setData] = useState<CityDataState>(() => seedData(city, snapshot));
   const [flags, setFlags] = useState<CityLoadFlags>(() => ({
@@ -137,7 +172,7 @@ export function useCityData(city: string, options: Options = {}) {
       history: !cached?.history?.length,
       health: !cached?.tips,
       insights: !cached?.exercise,
-      tech: !cached?.shap?.length,
+      tech: !cached?.explain?.available && !cached?.shap?.length,
     });
 
     const merge = (patch: Partial<CityDataState>) => {
@@ -204,19 +239,11 @@ export function useCityData(city: string, options: Options = {}) {
         setFlag({ history: false, insights: false });
       });
 
-    Promise.all([api.explain(city), api.monitoring(city)])
+    Promise.all([api.explain(city, { horizon: 24, allHorizons: true }), api.monitoring(city)])
       .then(([explain, monitoring]) => {
         if (id !== requestId.current) return;
         merge({
-          shap: (explain.top_features ?? []).map((x) => ({
-            ...x,
-            feature: shortenFeature(x.feature),
-          })),
-          localShap: (explain.local_features ?? []).map((x) => ({
-            ...x,
-            feature: shortenFeature(x.feature),
-          })),
-          explainMeta: { method: explain.method, note: explain.note },
+          ...packFromExplain(explain, shapHorizonRef.current),
           monitoring,
         });
         setFlag({ tech: false, switching: false });
@@ -231,8 +258,51 @@ export function useCityData(city: string, options: Options = {}) {
         setFlag({ switching: false });
       }
     };
-
   }, [city]);
 
+  useEffect(() => {
+    const explain = cityCache.get(city)?.explain;
+    if (!explain) return;
+    const patch = packFromExplain(explain, shapHorizon);
+    setData((prev) => {
+      const next = { ...prev, ...patch };
+      patchCache(city, patch);
+      return next;
+    });
+  }, [shapHorizon, city]);
+
   return { data, flags, error, insightError };
+}
+
+export function useExplainCompare(horizon = 24) {
+  const [compare, setCompare] = useState<ExplainCompareResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [requested, setRequested] = useState(false);
+
+  useEffect(() => {
+    if (!requested) return;
+    let cancelled = false;
+    setLoading(true);
+    api
+      .explainCompare(horizon)
+      .then((res) => {
+        if (!cancelled) setCompare(res);
+      })
+      .catch(() => {
+        if (!cancelled) setCompare(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [requested, horizon]);
+
+  return {
+    compare,
+    loading,
+    load: () => setRequested(true),
+    requested,
+  };
 }

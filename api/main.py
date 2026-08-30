@@ -19,7 +19,7 @@ from src.inference.predict import (
     predict_city,
 )
 from src.utils.timezone import latest_observed_row
-from src.inference.explain import explain_city
+from src.inference.explain import explain_city, explain_city_compare, global_shap_summary
 from src.insights.creative import (
     exercise_advice,
     explain_aqi,
@@ -201,14 +201,43 @@ def weather(city: str = Query(...)):
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 @app.get("/aqi/explain")
-def explain(city: str = Query("Lahore")):
+def explain(
+    city: str = Query("Lahore"),
+    horizon: int = Query(24, description="Primary forecast horizon hours"),
+    all_horizons: bool = Query(True, description="Also compute 24/48/72 packs"),
+):
     city = _validate_city(city)
+    if horizon not in (24, 48, 72):
+        raise HTTPException(status_code=400, detail="horizon must be 24, 48, or 72")
     try:
-        return explain_city(city, config)
+        return explain_city(
+            city,
+            config,
+            horizon_hours=horizon,
+            include_all_horizons=all_horizons,
+        )
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/aqi/explain/compare")
+def explain_compare(horizon: int = Query(24)):
+    if horizon not in (24, 48, 72):
+        raise HTTPException(status_code=400, detail="horizon must be 24, 48, or 72")
+    try:
+        return explain_city_compare(config, horizon_hours=horizon)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/aqi/explain/global")
+def explain_global():
+    try:
+        return global_shap_summary(config)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

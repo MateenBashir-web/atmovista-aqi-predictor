@@ -5,8 +5,10 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ComposedChart,
   Line,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -16,6 +18,7 @@ import {
   api,
   type BaselineResponse,
   type City,
+  type ExplainFeature,
   type ForecastResponse,
   type LeaderboardModel,
   type OpsStatus,
@@ -33,7 +36,7 @@ import {
 import { PakistanMap } from "./components/PakistanMap";
 import { PollutantBreakdown } from "./components/PollutantBreakdown";
 import { useAnimatedNumber } from "./hooks/useAnimatedNumber";
-import { useCityData } from "./hooks/useCityData";
+import { useCityData, useExplainCompare } from "./hooks/useCityData";
 import { useCitySnapshots } from "./hooks/useCitySnapshots";
 import { useTheme } from "./hooks/useTheme";
 import { useViewMode } from "./hooks/useViewMode";
@@ -45,6 +48,8 @@ import "./index.css";
 
 const GAUGE_MAX = 300;
 const GAUGE_CIRC = 2 * Math.PI * 72;
+const SHAP_UP = "#e85d4c";
+const SHAP_DOWN = "#3d9b7a";
 
 function severityClass(category?: string | null): string {
   if (!category) return "sev-unknown";
@@ -259,10 +264,18 @@ function ChartTooltip({
   label,
 }: {
   active?: boolean;
-  payload?: { name?: string; value?: number | string; color?: string; stroke?: string; fill?: string }[];
+  payload?: {
+    name?: string;
+    value?: number | string;
+    color?: string;
+    stroke?: string;
+    fill?: string;
+    payload?: ExplainFeature & { glossary?: string };
+  }[];
   label?: string;
 }) {
   if (!active || !payload?.length) return null;
+  const gloss = payload[0]?.payload?.glossary;
   return (
     <div className="chart-tooltip">
       {label && <div className="chart-tooltip-label">{label}</div>}
@@ -274,10 +287,11 @@ function ChartTooltip({
           />
           <span className="chart-tooltip-name">{p.name}</span>
           <strong className="chart-tooltip-num">
-            {typeof p.value === "number" ? p.value.toFixed(1) : p.value}
+            {typeof p.value === "number" ? p.value.toFixed(2) : p.value}
           </strong>
         </div>
       ))}
+      {gloss && <p className="chart-tooltip-gloss">{gloss}</p>}
     </div>
   );
 }
@@ -288,6 +302,7 @@ function App() {
   const { watchlist, toggleCity, maxWatchlistItems } = useWatchlist();
   const [cities, setCities] = useState<City[]>([]);
   const [city, setCity] = useState("Lahore");
+  const [shapHorizon, setShapHorizon] = useState(24);
   const { snapshots: citySnapshots, mapLoading, mapRefreshing, patchSnapshot } =
     useCitySnapshots(cities, city);
   const citySnapshot = citySnapshots[city];
@@ -296,7 +311,7 @@ function App() {
     flags: loadFlags,
     error: cityError,
     insightError,
-  } = useCityData(city, { snapshot: citySnapshot });
+  } = useCityData(city, { snapshot: citySnapshot, shapHorizon });
   const {
     forecast,
     history,
@@ -307,9 +322,13 @@ function App() {
     weather,
     shap,
     localShap,
+    localSigned,
+    explain,
     explainMeta,
     monitoring,
   } = cityData;
+  const { compare: shapCompare, loading: compareLoading, load: loadShapCompare, requested: compareRequested } =
+    useExplainCompare(shapHorizon);
   const [leaderboard, setLeaderboard] = useState<{ winner?: string; models: LeaderboardModel[] }>({
     models: [],
   });
@@ -464,7 +483,26 @@ function App() {
   );
 
   const shapChart = useMemo(() => shap.slice(0, 8), [shap]);
-  const localShapChart = useMemo(() => localShap.slice(0, 8), [localShap]);
+  const signedShapChart = useMemo(() => {
+    const rows = (localSigned.length ? localSigned : localShap).slice(0, 8);
+    return rows.map((r) => ({
+      ...r,
+      contribution: r.contribution ?? (r.direction === "down" ? -Math.abs(r.importance) : r.importance),
+      fill: (r.contribution ?? 0) >= 0 || r.direction === "up" ? SHAP_UP : SHAP_DOWN,
+    }));
+  }, [localSigned, localShap]);
+  const waterfall = explain?.horizons?.[String(shapHorizon)]?.waterfall ?? explain?.waterfall ?? null;
+  const narrative =
+    explain?.horizons?.[String(shapHorizon)]?.narrative ||
+    explainMeta.narrative ||
+    "";
+  const pollutantLink =
+    explain?.horizons?.[String(shapHorizon)]?.pollutant_link ?? explain?.pollutant_link;
+  const globalDrivers = explain?.global_summary?.top_features?.slice(0, 8) ?? [];
+  const maxWaterfallAbs = useMemo(() => {
+    if (!waterfall?.steps?.length) return 1;
+    return Math.max(...waterfall.steps.map((s) => Math.abs(s.contribution)), 1);
+  }, [waterfall]);
 
   const forecastTrend = useMemo(() => {
     const points = forecast?.forecast ?? [];
@@ -1801,13 +1839,36 @@ function App() {
             <p className="section-sub">
               {explainMeta.note || "What drives the forecast for this city."}
             </p>
+            <div className="xai-horizon-tabs" role="tablist" aria-label="SHAP horizon">
+              {(explain?.horizons_hours ?? [24, 48, 72]).map((h) => (
+                <button
+                  key={h}
+                  type="button"
+                  role="tab"
+                  aria-selected={shapHorizon === h}
+                  className={`xai-horizon-tab ${shapHorizon === h ? "active" : ""}`}
+                  onClick={() => setShapHorizon(h)}
+                >
+                  +{h}h
+                </button>
+              ))}
+            </div>
+            {narrative && <p className="xai-narrative">{narrative}</p>}
+            {pollutantLink?.note && (
+              <p className={`xai-pollutant-link ${pollutantLink.agree ? "agree" : ""}`}>
+                {pollutantLink.dominant_pollutant
+                  ? `Live chemistry: ${pollutantLink.dominant_pollutant}. `
+                  : ""}
+                {pollutantLink.note}
+              </p>
+            )}
             {!shap.length && !techLoading && (
               <div className="empty-state">Explanation appears after training completes.</div>
             )}
             {techLoading && !shapChart.length && <ChartSkeleton height={220} />}
             {!!shapChart.length && (
               <>
-                <p className="chart-subtitle">City-level drivers</p>
+                <p className="chart-subtitle">City-level drivers (mean |SHAP|)</p>
                 <div className="chart-box" style={{ height: 220 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={shapChart} layout="vertical" margin={{ left: 8, right: 12 }}>
@@ -1830,13 +1891,91 @@ function App() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                {!!localShapChart.length && (
+                {!!signedShapChart.length && (
                   <>
-                    <p className="chart-subtitle">Latest hour (local)</p>
-                    <div className="chart-box" style={{ height: 220 }}>
+                    <p className="chart-subtitle">
+                      Latest hour · signed (↑ raises AQI · ↓ lowers AQI)
+                    </p>
+                    <div className="chart-box" style={{ height: 240 }}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart
-                          data={localShapChart}
+                          data={signedShapChart}
+                          layout="vertical"
+                          margin={{ left: 8, right: 12 }}
+                        >
+                          <CartesianGrid stroke="rgba(244,248,255,0.05)" horizontal={false} />
+                          <XAxis type="number" stroke="#8b9db5" tick={{ fontSize: 10 }} />
+                          <YAxis
+                            type="category"
+                            dataKey="feature"
+                            width={108}
+                            stroke="#8b9db5"
+                            tick={{ fontSize: 10 }}
+                          />
+                          <ReferenceLine x={0} stroke="rgba(244,248,255,0.25)" />
+                          <Tooltip content={<ChartTooltip />} />
+                          <Bar dataKey="contribution" name="Contribution" radius={[0, 6, 6, 0]}>
+                            {signedShapChart.map((row) => (
+                              <Cell key={row.feature} fill={row.fill} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                )}
+                {waterfall?.steps?.length ? (
+                  <>
+                    <p className="chart-subtitle">
+                      Waterfall · base {waterfall.base_value} → forecast{" "}
+                      {waterfall.prediction}
+                    </p>
+                    <ul className="xai-waterfall">
+                      <li className="xai-waterfall-base">
+                        <span>Baseline</span>
+                        <strong>{waterfall.base_value.toFixed(1)}</strong>
+                      </li>
+                      {waterfall.steps.map((step) => (
+                        <li key={`${step.feature}-${step.before}`} title={step.glossary || undefined}>
+                          <span className="xai-waterfall-label">
+                            <span
+                              className={`xai-dir ${step.contribution >= 0 ? "up" : "down"}`}
+                              aria-hidden
+                            >
+                              {step.contribution >= 0 ? "↑" : "↓"}
+                            </span>
+                            {step.feature}
+                          </span>
+                          <span
+                            className="xai-waterfall-bar"
+                            style={{
+                              width: `${Math.max(8, (Math.abs(step.contribution) / maxWaterfallAbs) * 100)}%`,
+                              background: step.contribution >= 0 ? SHAP_UP : SHAP_DOWN,
+                            }}
+                          />
+                          <strong className={step.contribution >= 0 ? "up" : "down"}>
+                            {step.contribution >= 0 ? "+" : ""}
+                            {step.contribution.toFixed(2)}
+                          </strong>
+                        </li>
+                      ))}
+                      <li className="xai-waterfall-end">
+                        <span>Prediction</span>
+                        <strong>{waterfall.prediction.toFixed(1)}</strong>
+                      </li>
+                    </ul>
+                  </>
+                ) : null}
+                {!!globalDrivers.length && (
+                  <>
+                    <p className="chart-subtitle">Global training drivers</p>
+                    <div className="chart-box" style={{ height: 200 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={globalDrivers.map((g) => ({
+                            ...g,
+                            feature: g.feature.slice(0, 28),
+                          }))}
                           layout="vertical"
                           margin={{ left: 8, right: 12 }}
                         >
@@ -1852,15 +1991,55 @@ function App() {
                           <Tooltip content={<ChartTooltip />} />
                           <Bar
                             dataKey="importance"
-                            name="Importance"
-                            fill={accentColor}
+                            name="Global importance"
+                            fill="#7aa2ff"
                             radius={[0, 6, 6, 0]}
                           />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
+                    {explain?.global_summary?.note && (
+                      <p className="xai-footnote">{explain.global_summary.note}</p>
+                    )}
                   </>
                 )}
+                <div className="xai-compare">
+                  <p className="chart-subtitle">SHAP by city (+{shapHorizon}h)</p>
+                  {!compareRequested && (
+                    <button type="button" className="xai-compare-load" onClick={loadShapCompare}>
+                      Compare all cities
+                    </button>
+                  )}
+                  {compareLoading && <p className="muted">Comparing cities…</p>}
+                  {shapCompare?.cities?.length ? (
+                    <div className="xai-compare-grid">
+                      {shapCompare.cities.map((row) => (
+                        <button
+                          type="button"
+                          key={row.city}
+                          className={`xai-compare-card ${row.city === city ? "active" : ""}`}
+                          onClick={() => setCity(row.city)}
+                        >
+                          <strong>{row.city}</strong>
+                          <span className="muted">
+                            {row.available
+                              ? row.prediction != null
+                                ? `~${Math.round(row.prediction)} AQI`
+                                : "OK"
+                              : "n/a"}
+                          </span>
+                          <ul>
+                            {(row.top_features ?? []).slice(0, 3).map((f) => (
+                              <li key={f.feature} title={f.glossary}>
+                                {f.feature}
+                              </li>
+                            ))}
+                          </ul>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </>
             )}
         </div>
