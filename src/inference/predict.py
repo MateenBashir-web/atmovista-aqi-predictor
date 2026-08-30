@@ -427,19 +427,50 @@ def current_weather_for_city(city: str, config: dict[str, Any] | None = None) ->
     so2 = None if pd.isna(row.get("so2")) else float(row["so2"])
     co = None if pd.isna(row.get("co")) else float(row["co"])
 
-    pollutant_candidates: list[tuple[str, str, float | None]] = [
-        ("pm25", "PM2.5", pm25),
-        ("pm10", "PM10", pm10),
-        ("o3", "O3", o3),
-        ("no2", "NO2", no2),
-        ("so2", "SO2", so2),
-        ("co", "CO", co),
+    # Reference near "Unhealthy for Sensitive Groups" (approx. µg/m³) for bar fill only.
+    pollutant_meta: list[tuple[str, str, float | None, str, float]] = [
+        ("pm25", "PM2.5", pm25, "µg/m³", 55.0),
+        ("pm10", "PM10", pm10, "µg/m³", 155.0),
+        ("o3", "O₃", o3, "µg/m³", 180.0),
+        ("no2", "NO₂", no2, "µg/m³", 100.0),
+        ("so2", "SO₂", so2, "µg/m³", 200.0),
+        ("co", "CO", co, "µg/m³", 10000.0),
     ]
 
-    available = [(k, label, v) for (k, label, v) in pollutant_candidates if v is not None]
-    available.sort(key=lambda x: x[2], reverse=True)
-    top = available[0] if available else None
-    top2 = available[:3]
+    pollutants: list[dict[str, Any]] = []
+    for key, label, value, unit, ref in pollutant_meta:
+        if value is None:
+            continue
+        intensity = max(0.0, min(100.0, (float(value) / ref) * 100.0))
+        if intensity < 30:
+            level, color = "Good", "#00e400"
+        elif intensity < 55:
+            level, color = "Moderate", "#ffff00"
+        elif intensity < 75:
+            level, color = "Sensitive", "#ff7e00"
+        elif intensity < 90:
+            level, color = "Unhealthy", "#ff0000"
+        else:
+            level, color = "Very Unhealthy", "#8f3f97"
+        pollutants.append(
+            {
+                "key": key,
+                "label": label,
+                "value": round(float(value), 1),
+                "unit": unit,
+                "intensity_pct": round(intensity, 1),
+                "level": level,
+                "color": color,
+                "is_dominant": False,
+            }
+        )
+
+    pollutants.sort(key=lambda p: p["intensity_pct"], reverse=True)
+    if pollutants:
+        pollutants[0]["is_dominant"] = True
+
+    top = (pollutants[0]["key"], pollutants[0]["label"], pollutants[0]["value"]) if pollutants else None
+    top2 = [(p["key"], p["label"], p["value"]) for p in pollutants[:3]]
 
     if not top:
         pollutant_driver = None
@@ -480,7 +511,7 @@ def current_weather_for_city(city: str, config: dict[str, Any] | None = None) ->
 
     return {
         "city": city,
-        "event_time": str(row["event_time"]),
+        "event_time": pd.to_datetime(row["event_time"], utc=True).isoformat(),
         "temperature_c": None if temperature is None else round(temperature, 1),
         "humidity_pct": None if humidity is None else round(humidity),
         "wind_kph": None if wind_speed is None else round(wind_speed, 1),
@@ -493,8 +524,9 @@ def current_weather_for_city(city: str, config: dict[str, Any] | None = None) ->
         "wind_label": breeze,
         "pollutant_driver": pollutant_driver,
         "pollutant_driver_detail": pollutant_driver_detail,
+        "pollutants": pollutants,
         "pollutants_top": [
-            { "key": k, "label": label, "value": round(v, 2) }
+            {"key": k, "label": label, "value": round(float(v), 2)}
             for (k, label, v) in top2
         ],
     }

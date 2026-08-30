@@ -31,6 +31,7 @@ import {
   SmogSeasonPanel,
 } from "./components/InsightPanels";
 import { PakistanMap } from "./components/PakistanMap";
+import { PollutantBreakdown } from "./components/PollutantBreakdown";
 import { useAnimatedNumber } from "./hooks/useAnimatedNumber";
 import { useCityData } from "./hooks/useCityData";
 import { useCitySnapshots } from "./hooks/useCitySnapshots";
@@ -552,6 +553,32 @@ function App() {
     monitoring?.overall?.mae;
   const catAcc =
     monitoring?.city_stats?.category_accuracy ?? monitoring?.overall?.category_accuracy;
+
+  const cityAccuracyRows = useMemo(() => {
+    const byCity = monitoring?.by_city || {};
+    return Object.entries(byCity)
+      .map(([name, stats]) => ({
+        name,
+        mae: stats.mae ?? null,
+        category_accuracy: stats.category_accuracy ?? null,
+        n: stats.n ?? 0,
+      }))
+      .sort((a, b) => (a.mae ?? 999) - (b.mae ?? 999));
+  }, [monitoring?.by_city]);
+
+  const intervalRows = useMemo(
+    () =>
+      (forecast?.forecast || []).map((f) => ({
+        horizon: f.horizon_hours,
+        aqi: f.aqi,
+        low: f.aqi_low,
+        high: f.aqi_high,
+        level: f.interval_level,
+        model: f.model || forecast?.model,
+        day: formatHorizonDay(forecast?.event_time, f.horizon_hours),
+      })),
+    [forecast],
+  );
 
   const heroLoading = loadFlags.booting || (loadFlags.forecast && forecast?.current_aqi == null);
   const outlookLoading = loadFlags.outlook && !forecast?.forecast?.length;
@@ -1088,7 +1115,7 @@ function App() {
               <AqiColorLegend bands activeCategory={forecast?.current_category} />
 
               <div className="weather-premium-shell">
-                <div className="weather-premium-grid">
+                <div className="weather-premium-grid weather-premium-grid-6">
                   <div className="weather-premium-card">
                     <span className="weather-icon-badge" aria-hidden="true">
                       ◐
@@ -1110,7 +1137,7 @@ function App() {
                         <span className="weather-metric-label">Humidity</span>
                       </div>
                       <strong>{weather?.humidity_pct != null ? `${weather.humidity_pct}%` : "—"}</strong>
-                      <small>{weather?.cloud_cover_pct != null ? `${weather.cloud_cover_pct}% cloud cover` : "air moisture"}</small>
+                      <small>{weather?.comfort_label === "sticky" ? "feels sticky" : "air moisture"}</small>
                     </div>
                   </div>
                   <div className="weather-premium-card">
@@ -1123,14 +1150,60 @@ function App() {
                       </div>
                       <strong>{weather?.wind_kph != null ? `${Math.round(weather.wind_kph)} km/h` : "—"}</strong>
                       <small>
-                        {weather?.wind_label || "wind"} {weather?.wind_direction_deg != null ? `· ${formatWindDirection(weather.wind_direction_deg)}` : ""}
+                        {weather?.wind_label || "wind"}{" "}
+                        {weather?.wind_direction_deg != null ? `· ${formatWindDirection(weather.wind_direction_deg)}` : ""}
                       </small>
+                    </div>
+                  </div>
+                  <div className="weather-premium-card">
+                    <span className="weather-icon-badge" aria-hidden="true">
+                      ☁
+                    </span>
+                    <div className="weather-premium-content">
+                      <div className="weather-premium-top">
+                        <span className="weather-metric-label">Clouds</span>
+                      </div>
+                      <strong>{weather?.cloud_cover_pct != null ? `${weather.cloud_cover_pct}%` : "—"}</strong>
+                      <small>sky cover</small>
+                    </div>
+                  </div>
+                  <div className="weather-premium-card">
+                    <span className="weather-icon-badge" aria-hidden="true">
+                      ☔
+                    </span>
+                    <div className="weather-premium-content">
+                      <div className="weather-premium-top">
+                        <span className="weather-metric-label">Rain</span>
+                      </div>
+                      <strong>
+                        {weather?.precipitation_mm != null ? `${weather.precipitation_mm} mm` : "—"}
+                      </strong>
+                      <small>precipitation</small>
+                    </div>
+                  </div>
+                  <div className="weather-premium-card">
+                    <span className="weather-icon-badge" aria-hidden="true">
+                      ⌘
+                    </span>
+                    <div className="weather-premium-content">
+                      <div className="weather-premium-top">
+                        <span className="weather-metric-label">Pressure</span>
+                      </div>
+                      <strong>
+                        {weather?.pressure_hpa != null ? `${Math.round(weather.pressure_hpa)}` : "—"}
+                      </strong>
+                      <small>hPa · surface</small>
                     </div>
                   </div>
                 </div>
               </div>
 
               <p className="city-conditions-summary">{cityConditionsSummary}</p>
+
+              <PollutantBreakdown
+                pollutants={weather?.pollutants}
+                driverDetail={weather?.pollutant_driver_detail}
+              />
 
               <div className="insight-ribbon-stack">
                 {weather?.air_driver && (
@@ -1141,17 +1214,6 @@ function App() {
                     <div>
                       <strong>Weather read</strong>
                       <p>{weather.air_driver}</p>
-                    </div>
-                  </div>
-                )}
-                {weather?.pollutant_driver_detail && (
-                  <div className="insight-ribbon">
-                    <span className="insight-ribbon-icon" aria-hidden="true">
-                      ◎
-                    </span>
-                    <div>
-                      <strong>{weather.pollutant_driver || "Pollutant"} driver</strong>
-                      <p>{weather.pollutant_driver_detail}</p>
                     </div>
                   </div>
                 )}
@@ -1553,6 +1615,130 @@ function App() {
         <section className="grid-2 reveal reveal-2">
           <BaselinePanel data={baseline} />
           <PipelinePanel data={pipeline} />
+        </section>
+
+        <section className="grid-2 reveal reveal-2">
+          <div className="panel">
+            <div className="section-head">
+              <div>
+                <p className="section-kicker">Serving</p>
+                <h2 className="section-title">Data freshness</h2>
+              </div>
+              <span className="section-icon">◷</span>
+            </div>
+            <p className="section-sub">What timestamp the live API is using for {city}.</p>
+            <div className="stat-row">
+              <div className="stat-card">
+                <p className="stat-label">Observation</p>
+                <p className="stat-value" style={{ fontSize: "1.05rem" }}>
+                  {formatDayLabel(forecast?.event_time)}
+                </p>
+                <span className="stat-hint">{formatRelativeTime(forecast?.event_time)}</span>
+              </div>
+              <div className="stat-card">
+                <p className="stat-label">Exact time</p>
+                <p className="stat-value" style={{ fontSize: "0.95rem" }}>
+                  {formatDateTime(forecast?.event_time)}
+                </p>
+                <span className="stat-hint">Asia/Karachi</span>
+              </div>
+              <div className="stat-card">
+                <p className="stat-label">Storage</p>
+                <p className="stat-value" style={{ fontSize: "1.05rem" }}>
+                  {ops?.storage_mode || "—"}
+                </p>
+                <span className="stat-hint">feature source</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="section-head">
+              <div>
+                <p className="section-kicker">Uncertainty</p>
+                <h2 className="section-title">Prediction intervals</h2>
+              </div>
+              <span className="section-icon">≈</span>
+            </div>
+            <p className="section-sub">
+              Forecast range per horizon (when available) — shows model uncertainty, not just a point.
+            </p>
+            {!intervalRows.length ? (
+              <div className="empty-state">Load a city forecast to see intervals.</div>
+            ) : (
+              <div className="table-wrap">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Horizon</th>
+                      <th>Day</th>
+                      <th>Point</th>
+                      <th>Range</th>
+                      <th>Model</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {intervalRows.map((r) => (
+                      <tr key={r.horizon}>
+                        <td>+{r.horizon}h</td>
+                        <td>{r.day}</td>
+                        <td>{r.aqi}</td>
+                        <td>
+                          {r.low != null && r.high != null
+                            ? `${r.low} – ${r.high}`
+                            : "—"}
+                          {r.level != null ? (
+                            <div className="muted" style={{ fontSize: "0.75rem" }}>
+                              ~{Math.round(r.level * 100)}% interval
+                            </div>
+                          ) : null}
+                        </td>
+                        <td>{r.model || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="panel reveal reveal-3">
+          <div className="section-head">
+            <div>
+              <p className="section-kicker">Monitoring</p>
+              <h2 className="section-title">Accuracy by city</h2>
+            </div>
+            <span className="section-icon">▣</span>
+          </div>
+          <p className="section-sub">
+            Live MAE and category hit-rate from scored forecasts — lower MAE is better.
+          </p>
+          {!cityAccuracyRows.length ? (
+            <div className="empty-state">City-level monitoring appears after scored forecasts exist.</div>
+          ) : (
+            <div className="city-accuracy-grid">
+              {cityAccuracyRows.map((row) => (
+                <div
+                  className={`city-accuracy-card ${row.name === city ? "is-active" : ""}`}
+                  key={row.name}
+                >
+                  <div className="city-accuracy-top">
+                    <strong>{row.name}</strong>
+                    {row.name === city ? <span className="pollutant-badge">Selected</span> : null}
+                  </div>
+                  <p className="city-accuracy-mae">
+                    MAE <strong>{row.mae != null ? row.mae.toFixed(1) : "—"}</strong>
+                  </p>
+                  <p className="city-accuracy-meta">
+                    Band {row.category_accuracy != null ? `${Math.round(row.category_accuracy * 100)}%` : "—"}
+                    {" · "}
+                    n={row.n}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="grid-2 reveal reveal-3">

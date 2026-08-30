@@ -34,6 +34,17 @@ export type HistoryPoint = {
   pm25: number | null;
 };
 
+export type PollutantReading = {
+  key: string;
+  label: string;
+  value: number;
+  unit: string;
+  intensity_pct: number;
+  level: string;
+  color: string;
+  is_dominant: boolean;
+};
+
 export type WeatherResponse = {
   city: string;
   event_time: string;
@@ -49,6 +60,7 @@ export type WeatherResponse = {
   wind_label: string;
   pollutant_driver: string | null;
   pollutant_driver_detail: string;
+  pollutants?: PollutantReading[];
   pollutants_top: { key: string; label: string; value: number }[];
 };
 
