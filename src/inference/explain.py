@@ -173,7 +173,6 @@ def _pollutant_link(local_signed: list[dict[str, Any]], pollutants: list[dict[st
     agree = False
     if dominant and shap_hits:
         agree = any(dominant.get("key") in h["key"] or h["key"] in str(dominant.get("key")) for h in shap_hits)
-        # also match pm25 vs PM2.5 label
         dkey = str(dominant.get("key", "")).lower()
         agree = agree or any(dkey in h["key"] or h["key"] in dkey for h in shap_hits)
     return {

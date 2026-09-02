@@ -434,7 +434,6 @@ function App() {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
       });
 
-    // Experts panels — load in background, don't block the everyday view.
     api.opsStatus().then(setOps).catch(() => undefined);
     api.leaderboard().then((l) => setLeaderboard({ winner: l.winner, models: l.models ?? [] })).catch(() => undefined);
     api

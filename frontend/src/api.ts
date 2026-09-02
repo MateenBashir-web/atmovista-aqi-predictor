@@ -316,7 +316,6 @@ function isRetriableNetworkError(message: string): boolean {
   );
 }
 
-/** Retry briefly on network blips; Starter should already be awake. */
 async function getJson<T>(path: string, retries = 4): Promise<T> {
   let lastError: Error | null = null;
   for (let attempt = 1; attempt <= retries; attempt++) {
@@ -337,7 +336,6 @@ async function getJson<T>(path: string, retries = 4): Promise<T> {
   throw lastError ?? new Error("Request failed");
 }
 
-/** Soft ping — do not block the UI on this. */
 export async function wakeApi(): Promise<boolean> {
   try {
     await getJson<{ status: string }>("/health", 3);

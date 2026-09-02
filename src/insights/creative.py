@@ -335,7 +335,6 @@ def pipeline_health(config: dict[str, Any] | None = None) -> dict[str, Any]:
     deployed = storage == "hopsworks"
     checks: list[dict[str, Any]] = []
 
-    # --- Features: Hopsworks live data when deployed; local parquet otherwise ---
     feat_updated: datetime | None = None
     if deployed:
         feat_label = "Feature store (Hopsworks)"
@@ -378,7 +377,6 @@ def pipeline_health(config: dict[str, Any] | None = None) -> dict[str, Any]:
         }
     )
 
-    # --- Model: on Render, deployed winner files matter more than training age ---
     model_dir = root / "artifacts" / "models"
     winner_path = model_dir / "winner.json"
     trained_at = None
@@ -396,7 +394,6 @@ def pipeline_health(config: dict[str, Any] | None = None) -> dict[str, Any]:
         model_status = "red"
         model_detail = f"{winner_name or 'Winner'} registered but model files missing"
     elif deployed:
-        # API host only gets new winner files on redeploy; don't flag age as "Needs action"
         model_status = "green"
         model_detail = f"{winner_name} · serving on API"
         if trained_at and _freshness(trained_at, ok_hours=24 * 14, warn_hours=24 * 45) == "red":
@@ -416,7 +413,6 @@ def pipeline_health(config: dict[str, Any] | None = None) -> dict[str, Any]:
         }
     )
 
-    # --- Monitoring: CI/deploy snapshot on API host is expected; don't age-out as failure ---
     mon_path = root / "artifacts" / "monitoring" / "summary.json"
     mon_at = None
     mon_detail = "No monitoring summary"

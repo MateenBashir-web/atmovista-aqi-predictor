@@ -138,7 +138,6 @@ def forecast(city: str = Query(...)):
 
 @app.get("/aqi/snapshots")
 def snapshots():
-    """Fast map pins: latest observed AQI per city (no model inference)."""
     import pandas as pd
 
     from src.utils.aqi_bands import aqi_category, aqi_color

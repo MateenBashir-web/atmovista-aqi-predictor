@@ -1,5 +1,3 @@
-# Keep the free Render API from sleeping between mentor demos.
-# Render free spins down after ~15 min idle; ping every 10 min.
 name: Keep API Awake
 
 on:

@@ -1,4 +1,3 @@
-"""Generate a clean AtmoVista internship report PDF with proper tables."""
 
 from __future__ import annotations
 
@@ -106,7 +105,6 @@ def main() -> None:
     pdf.set_margins(16, 16, 16)
     pdf.add_page()
 
-    # Cover / title
     h1(pdf, "AtmoVista - Internship Project Report")
     body(
         pdf,
@@ -119,7 +117,6 @@ def main() -> None:
     meta_line(pdf, "Deployment:", "API on Render, frontend on Vercel, features/models on Hopsworks")
     pdf.ln(2)
 
-    # 1
     h2(pdf, "1. Introduction")
     body(
         pdf,
@@ -144,7 +141,6 @@ def main() -> None:
         "while also showing model performance and explainability for technical review.",
     )
 
-    # 2
     h2(pdf, "2. Problem statement")
     body(pdf, "Air quality in Pakistan varies strongly by city and season. A useful system should:")
     for item in [
@@ -162,7 +158,6 @@ def main() -> None:
         "(For you / For experts).",
     )
 
-    # 3
     h2(pdf, "3. Objectives completed")
     draw_table(
         pdf,
@@ -188,7 +183,6 @@ def main() -> None:
         "the mentor allowed a stronger custom frontend for higher UI marks.",
     )
 
-    # 4
     h2(pdf, "4. System overview")
     body(pdf, "AtmoVista follows this flow in production:")
     for item in [
@@ -219,7 +213,6 @@ def main() -> None:
         col_widths=(1.0, 2.6),
     )
 
-    # 5
     h2(pdf, "5. Technology stack")
     draw_table(
         pdf,
@@ -238,7 +231,6 @@ def main() -> None:
         col_widths=(1.1, 1.4, 1.5),
     )
 
-    # 6
     h2(pdf, "6. Data collection")
     body(
         pdf,
@@ -280,7 +272,6 @@ def main() -> None:
         col_widths=(1.6, 2.0),
     )
 
-    # 7
     h2(pdf, "7. Feature engineering")
     body(pdf, "Implemented in src/features/engineering.py.")
     draw_table(
@@ -305,7 +296,6 @@ def main() -> None:
     ]:
         bullet(pdf, item)
 
-    # 8
     h2(pdf, "8. Exploratory data analysis (EDA)")
     body(pdf, "EDA notebook: notebooks/eda.ipynb. Plots include timeseries, correlation heatmap, seasonality, and city boxplots.")
     body(pdf, "Key findings:")
@@ -342,7 +332,6 @@ def main() -> None:
         col_widths=(1.2, 2.4),
     )
 
-    # 9
     h2(pdf, "9. Training pipeline")
     body(pdf, "Script: pipelines/training_pipeline.py")
     h3(pdf, "Models experimented")
@@ -382,7 +371,6 @@ def main() -> None:
     )
     body(pdf, "Winner label: ridge@24h+hist_gradient_boosting@48h+ridge@72h  |  Trained: 2026-08-11")
 
-    # 10
     h2(pdf, "10. Results")
     h3(pdf, "10.1 Validation metrics (winner models)")
     draw_table(
@@ -443,7 +431,6 @@ def main() -> None:
     )
     body(pdf, "Karachi performs best in live monitoring. Lahore is the hardest city among the five.")
 
-    # 11
     h2(pdf, "11. Feature store and model registry (Hopsworks)")
     draw_table(
         pdf,
@@ -462,7 +449,6 @@ def main() -> None:
         "in-memory cache in the API. The deployed app uses Hopsworks as the source of truth.",
     )
 
-    # 12
     h2(pdf, "12. Inference and API")
     body(pdf, "API module: api/main.py")
     draw_table(
@@ -490,7 +476,6 @@ def main() -> None:
     ]:
         bullet(pdf, item)
 
-    # 13
     h2(pdf, "13. AtmoVista dashboard (frontend)")
     body(pdf, "Built with React + Vite + TypeScript and deployed on Vercel.")
     h3(pdf, "For you (everyday mode)")
@@ -513,7 +498,6 @@ def main() -> None:
     ]:
         bullet(pdf, item)
 
-    # 14
     h2(pdf, "14. Alerts and health guidance")
     draw_table(
         pdf,
@@ -526,7 +510,6 @@ def main() -> None:
         col_widths=(1.2, 2.8),
     )
 
-    # 15
     h2(pdf, "15. Explainability (SHAP)")
     body(
         pdf,
@@ -555,7 +538,6 @@ def main() -> None:
         "and weather-linked features.",
     )
 
-    # 16
     h2(pdf, "16. Automation / CI-CD (GitHub Actions)")
     body(pdf, "The repository is on GitHub. Scheduled workflows keep the system updated.")
     draw_table(
@@ -570,7 +552,6 @@ def main() -> None:
     )
     body(pdf, "Repository secrets used by Actions: HOPSWORKS_API_KEY, HOPSWORKS_PROJECT, HOPSWORKS_HOST (optional).")
 
-    # 17
     h2(pdf, "17. Deployment")
     draw_table(
         pdf,
@@ -590,7 +571,6 @@ def main() -> None:
     ]:
         bullet(pdf, item)
 
-    # 18
     h2(pdf, "18. Creative / unique additions")
     draw_table(
         pdf,
@@ -612,7 +592,6 @@ def main() -> None:
         col_widths=(1.5, 2.5),
     )
 
-    # 19
     h2(pdf, "19. Limitations")
     for item in [
         "Open-Meteo AQI is model-based and may differ from local ground stations.",
@@ -623,7 +602,6 @@ def main() -> None:
     ]:
         bullet(pdf, item)
 
-    # 20
     h2(pdf, "20. Future work")
     for item in [
         "Fuse station-level AQI (where available) for calibration",
@@ -635,7 +613,6 @@ def main() -> None:
     ]:
         bullet(pdf, item)
 
-    # 21
     h2(pdf, "21. Conclusion")
     body(
         pdf,
@@ -653,7 +630,6 @@ def main() -> None:
     pdf.ln(1)
     body(pdf, "These results support practical short-term planning and health guidance.")
 
-    # 22
     h2(pdf, "22. Appendix - important files")
     draw_table(
         pdf,

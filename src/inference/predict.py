@@ -427,7 +427,6 @@ def current_weather_for_city(city: str, config: dict[str, Any] | None = None) ->
     so2 = None if pd.isna(row.get("so2")) else float(row["so2"])
     co = None if pd.isna(row.get("co")) else float(row["co"])
 
-    # Reference near "Unhealthy for Sensitive Groups" (approx. µg/m³) for bar fill only.
     pollutant_meta: list[tuple[str, str, float | None, str, float]] = [
         ("pm25", "PM2.5", pm25, "µg/m³", 55.0),
         ("pm10", "PM10", pm10, "µg/m³", 155.0),

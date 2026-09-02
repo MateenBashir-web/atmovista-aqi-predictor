@@ -1,4 +1,3 @@
-/** Pakistan-facing app: show calendar dates/times in local time. */
 export const APP_TIMEZONE = "Asia/Karachi";
 
 const DATE_FMT: Intl.DateTimeFormatOptions = {

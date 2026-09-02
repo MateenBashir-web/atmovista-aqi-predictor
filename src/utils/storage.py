@@ -12,10 +12,9 @@ import pandas as pd
 from .config import get_project_root, load_config
 
 _FEATURES_MEM: dict[str, Any] = {}
-_FEATURES_MEM_TTL_SEC = 3600.0  # features refresh hourly; keep warm between requests
+_FEATURES_MEM_TTL_SEC = 3600.0
 _FEATURES_LOAD_LOCK = threading.Lock()
 _HOPSWORKS_PROJECT = None
-# Inference needs ~72h lags; 7 days of hourly rows is enough for history + forecast.
 _FEATURES_KEEP_PER_CITY = 168
 _SERVE_LOOKBACK_DAYS = int(os.getenv("FEATURE_SERVE_DAYS", "7"))
 
@@ -211,7 +210,6 @@ def _load_features_hopsworks(cfg: dict[str, Any]) -> pd.DataFrame:
         gc.collect()
         return trimmed
 
-    # Online store is smallest — try first on the 512MB API instance.
     for label, reader in (
         ("online", lambda: fg.read(online=True)),
     ):
@@ -230,7 +228,6 @@ def _load_features_hopsworks(cfg: dict[str, Any]) -> pd.DataFrame:
     except Exception as exc:
         errors.append(f"filtered_recent: {type(exc).__name__}: {exc}")
 
-    # Never pull the full offline FG on the API — it OOMs Starter (512MB).
     raise RuntimeError("; ".join(errors) if errors else "No recent feature rows returned")
 
 def load_features(config: dict[str, Any] | None = None) -> pd.DataFrame:
@@ -241,7 +238,6 @@ def load_features(config: dict[str, Any] | None = None) -> pd.DataFrame:
     if cached is not None and not cached.empty:
         return cached
 
-    # Single-flight: avoid stampedes that crash Starter RAM / block the API.
     with _FEATURES_LOAD_LOCK:
         cached = _mem_features()
         if cached is not None and not cached.empty:
