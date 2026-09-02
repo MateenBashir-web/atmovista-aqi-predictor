@@ -1,42 +1,42 @@
 # AtmoVista — Internship Project Report
 
 **Project title:** AtmoVista (Pearls AQI Predictor)  
-**Theme:** End-to-end AQI forecasting for Pakistan with MLOps  
+**Theme:** AQI forecasting for Pakistan with MLOps  
 **Forecast window:** Next 3 days (+24h, +48h, +72h)  
 **Cities:** Lahore, Karachi, Islamabad, Peshawar, Quetta  
-**Repository:** Hosted on GitHub with GitHub Actions CI/CD  
-**Deployment:** FastAPI on Render, AtmoVista frontend on Vercel, features/models on Hopsworks
+**Repository:** GitHub (with GitHub Actions)  
+**Deployment:** FastAPI on Render, React UI on Vercel, features/models on Hopsworks
 
 ---
 
 ## 1. Introduction
 
-AtmoVista is an end-to-end machine learning system that predicts Air Quality Index (AQI) for five major Pakistan cities over the next three days. The full pipeline is implemented, pushed to GitHub, automated with GitHub Actions, and deployed for live use.
+For my internship project I built **AtmoVista**, a system that forecasts Air Quality Index (AQI) for five major cities in Pakistan over the next three days. I collected data, engineered features, trained and compared multiple models, stored everything in Hopsworks, and deployed a working web app that mentors and users can open live.
 
-The system includes:
+The main parts of the project are:
 
-- automated data collection
-- feature engineering and historical backfill
-- multi-model training and evaluation
+- data collection from Open-Meteo
+- feature engineering and backfill
+- model training (Ridge, Random Forest, HistGradientBoosting, LSTM)
 - Hopsworks feature store and model registry
-- CI/CD with GitHub Actions (hourly features + daily training)
-- interactive AtmoVista web dashboard (FastAPI + React)
+- GitHub Actions for hourly features and daily training
+- FastAPI backend + React frontend (AtmoVista dashboard)
 
-The goal is practical: help everyday users understand current and upcoming air quality, while also showing model performance and explainability for technical review.
+I wanted the app to be useful for normal users (current AQI, 3-day outlook, health tips) and also clear enough for technical review (model scores, SHAP, monitoring).
 
 ---
 
 ## 2. Problem statement
 
-Air quality in Pakistan varies strongly by city and season. A useful system should:
+Air quality in Pakistan changes a lot between cities and seasons, especially during smog months. Based on the internship brief, I focused on these requirements:
 
-1. Forecast AQI for the next 24, 48, and 72 hours
-2. Update regularly with fresh data
-3. Explain predictions (not just show a number)
-4. Alert when conditions become unhealthy or hazardous
-5. Run on a free / serverless-friendly stack
+1. Forecast AQI for +24h, +48h, and +72h
+2. Keep data updated on a schedule
+3. Explain why the model predicts a certain level (SHAP / XAI)
+4. Show alerts for unhealthy or hazardous air
+5. Use tools that work on free or low-cost hosting
 
-AtmoVista addresses these needs with an MLOps pipeline and a dual-mode dashboard (**For you** / **For experts**).
+AtmoVista covers these through a full pipeline and a dashboard with two modes: **For you** (everyday use) and **For experts** (models, explainability, accuracy).
 
 ---
 
@@ -44,34 +44,34 @@ AtmoVista addresses these needs with an MLOps pipeline and a dual-mode dashboard
 
 | Objective | Status |
 |---|---|
-| Predict AQI for next 3 days | Completed |
-| Feature pipeline (fetch to features to feature store) | Completed |
-| Historical backfill for training | Completed |
-| Train and evaluate multiple models | Completed |
-| Store models in model registry | Completed |
-| Automate hourly and daily pipelines (GitHub Actions) | Completed and running |
-| Interactive dashboard with forecasts | Completed (AtmoVista React UI) |
-| EDA | Completed |
-| SHAP explainability | Completed |
-| Hazardous AQI alerts | Completed |
-| GitHub repository + deployment | Completed (GitHub, Render, Vercel, Hopsworks) |
+| Predict AQI for next 3 days | Done |
+| Feature pipeline (fetch → features → feature store) | Done |
+| Historical backfill for training | Done |
+| Train and evaluate multiple models | Done |
+| Store models in model registry | Done |
+| Automate hourly and daily pipelines (GitHub Actions) | Done |
+| Interactive dashboard with forecasts | Done (AtmoVista React UI) |
+| EDA | Done |
+| SHAP explainability | Done |
+| Hazardous AQI alerts | Done |
+| GitHub repository + deployment | Done (GitHub, Render, Vercel, Hopsworks) |
 
-**UI note:** The brief mentions Streamlit/Gradio. This project uses FastAPI + React because the mentor allowed a stronger custom frontend for higher UI marks.
+The brief suggested Streamlit or Gradio. My mentor allowed FastAPI + React instead, so I built a custom UI for better presentation marks.
 
 ---
 
 ## 4. System overview
 
-AtmoVista follows this flow in production:
+This is how the deployed system works:
 
-1. Open-Meteo APIs provide pollutant and weather data
-2. Feature and backfill pipelines engineer hourly features
-3. Features are stored in the Hopsworks Feature Store
-4. The training pipeline compares Ridge, Random Forest, HistGradientBoosting, and LSTM
-5. Winning models are registered in the Hopsworks Model Registry
-6. FastAPI loads models/features and serves forecasts
-7. The AtmoVista React dashboard consumes the API
-8. GitHub Actions keeps features and models updated on schedule
+1. Open-Meteo provides air quality and weather data
+2. Backfill and feature pipelines create hourly features
+3. Features go into the Hopsworks Feature Store
+4. Training compares Ridge, Random Forest, HistGradientBoosting, and LSTM
+5. Best models per horizon are saved to the Hopsworks Model Registry
+6. FastAPI loads models/features and returns forecasts
+7. The React dashboard calls the API
+8. GitHub Actions refresh features and retrain on schedule
 
 ### Main layers
 
@@ -89,17 +89,17 @@ AtmoVista follows this flow in production:
 
 ## 5. Technology stack
 
-| Area | Choice | Reason |
+| Area | Choice | Why I used it |
 |---|---|---|
 | Language | Python | Required for ML pipelines |
 | Classical ML | Scikit-learn | Ridge / RF / HistGB |
-| Deep learning | TensorFlow LSTM | Advanced model requirement |
-| Feature store | Hopsworks | Feature Store + Model Registry |
-| Orchestration | GitHub Actions | Free CI/CD alternative to Airflow |
-| API | FastAPI | Backend for serving forecasts |
-| UI | React + Vite + TypeScript | Mentor-approved custom frontend |
-| Explainability | SHAP (local + global) | Required XAI; per-horizon signed drivers |
-| Deploy | Render + Vercel | Production hosting (Render Standard for demo reliability) |
+| Deep learning | TensorFlow LSTM | Required advanced model |
+| Feature store | Hopsworks | Feature Store + Model Registry in brief |
+| Orchestration | GitHub Actions | Free CI/CD (instead of Airflow) |
+| API | FastAPI | Serve forecasts to the UI |
+| UI | React + Vite + TypeScript | Custom frontend (mentor approved) |
+| Explainability | SHAP | Required XAI; per-horizon signed drivers |
+| Deploy | Render + Vercel | Host API and frontend |
 
 ---
 
@@ -107,7 +107,7 @@ AtmoVista follows this flow in production:
 
 ### Source
 
-Open-Meteo Air Quality API and Weather API (free, no paid key). The brief lists AQICN/OpenWeather as examples and allows exploring other options.
+I used the **Open-Meteo Air Quality API** and **Weather API** because they are free and do not need a paid key. The brief mentioned AQICN/OpenWeather as examples; Open-Meteo was enough for this project.
 
 ### Variables used
 
@@ -144,7 +144,7 @@ Open-Meteo Air Quality API and Weather API (free, no paid key). The brief lists 
 
 ## 7. Feature engineering
 
-Implemented in `src/features/engineering.py`.
+I implemented features in `src/features/engineering.py`.
 
 ### Feature groups
 
@@ -152,7 +152,7 @@ Implemented in `src/features/engineering.py`.
 |---|---|
 | Raw signals | pollutants, weather, current AQI |
 | Time features | hour, day, day_of_week, month, sin/cos encodings |
-| Derived features | AQI change rate, temp x humidity, wind x PM2.5 |
+| Derived features | AQI change rate, temp × humidity, wind × PM2.5 |
 | Lag features | AQI and PM2.5 lags at 1, 3, 6, 12, 24, 48, 72 hours |
 | Rolling stats | mean/std over 6h, 12h, 24h windows |
 | Future weather | weather at t+24 / t+48 / t+72 |
@@ -160,26 +160,24 @@ Implemented in `src/features/engineering.py`.
 
 ### Design choices
 
-- Per-horizon models instead of one multi-output model (better accuracy)
-- Realistic mode adds controlled noise to future-weather features during training
-- Prediction intervals (80%) estimated from validation residuals
+- Separate model per horizon (+24h, +48h, +72h) instead of one multi-output model — this gave better accuracy in my experiments
+- Added controlled noise to future-weather features during training (realistic mode)
+- Prediction intervals (80%) from validation residuals
 
 ---
 
 ## 8. Exploratory data analysis (EDA)
 
-EDA materials:
+**Notebook:** `notebooks/eda.ipynb`  
+**Plots:** timeseries, correlation heatmap, seasonality, city boxplots
 
-- Notebook: `notebooks/eda.ipynb`
-- Plots: timeseries, correlation heatmap, seasonality, city boxplots
+### What I found
 
-### Key findings
-
-1. Lahore has the highest median AQI and widest spread (strong smog spikes).
-2. Karachi is the most stable city with the lowest mean AQI in this dataset.
-3. PM2.5 and PM10 are the strongest linear correlates of AQI.
-4. Evening/night hours and winter months (Nov to Jan) tend toward higher mean AQI.
-5. City-specific behavior justifies shared features but different error profiles.
+1. Lahore has the highest median AQI and the biggest spikes (smog).
+2. Karachi is the most stable city with the lowest mean AQI in my dataset.
+3. PM2.5 and PM10 correlate most strongly with AQI.
+4. Evening/night and winter months (Nov–Jan) tend to have higher AQI on average.
+5. Each city behaves differently, so shared features still make sense but error varies by city.
 
 ### City AQI summary (from EDA)
 
@@ -202,9 +200,9 @@ EDA materials:
 
 ## 9. Training pipeline
 
-Script: `pipelines/training_pipeline.py`
+**Script:** `pipelines/training_pipeline.py`
 
-### Models experimented
+### Models I trained
 
 | Model | Library |
 |---|---|
@@ -213,60 +211,58 @@ Script: `pipelines/training_pipeline.py`
 | HistGradientBoosting | Scikit-learn |
 | LSTM | TensorFlow |
 
-### Evaluation metrics
+### Metrics used
 
 | Metric | Purpose |
 |---|---|
-| RMSE | Main selection metric |
+| RMSE | Main metric for picking winners |
 | MAE | Average absolute error |
-| R2 | Explained variance |
-| Category accuracy | AQI band match for user-facing quality |
+| R² | Explained variance |
+| Category accuracy | How often the AQI band (Good, Unhealthy, etc.) is correct |
 
-### Winner strategy
+### Winners (validation RMSE)
 
-Best model is selected per horizon using validation RMSE.
-
-| Horizon | Selected model |
+| Horizon | Model |
 |---|---|
 | +24h | Ridge |
 | +48h | HistGradientBoosting |
 | +72h | Ridge |
 
-Winner label: `ridge@24h+hist_gradient_boosting@48h+ridge@72h`  
-Trained: 2026-08-11
+**Combined label:** `ridge@24h+hist_gradient_boosting@48h+ridge@72h`  
+**Last training run:** 2026-08-11
 
 ---
 
 ## 10. Results
 
-### 10.1 Validation metrics (winner models)
+### 10.1 Validation metrics (winners)
 
-| Horizon | Winner | RMSE | MAE | R2 | Category Acc. |
+| Horizon | Winner | RMSE | MAE | R² | Category Acc. |
 |---|---|---|---|---|---|
 | +24h | Ridge | 21.63 | 14.33 | 0.716 | 72.8% |
 | +48h | HistGB | 26.22 | 18.64 | 0.583 | 59.9% |
 | +72h | Ridge | 28.47 | 19.78 | 0.508 | 61.2% |
 
-### 10.2 Test metrics (winner models)
+### 10.2 Test metrics (winners)
 
-| Horizon | Winner | RMSE | MAE | R2 | Category Acc. |
+| Horizon | Winner | RMSE | MAE | R² | Category Acc. |
 |---|---|---|---|---|---|
 | +24h | Ridge | 20.63 | 14.77 | 0.611 | 67.8% |
 | +48h | HistGB | 26.63 | 19.26 | 0.352 | 58.1% |
 | +72h | Ridge | 28.18 | 20.90 | 0.275 | 54.9% |
 
-### 10.3 Interpretation
+### 10.3 My reading of the results
 
-- Short-horizon (+24h) forecasts are clearly strongest.
-- Error grows with horizon, which is expected for air-quality forecasting.
-- Models beat a simple persistence baseline on the tracked horizons.
-- Category accuracy matters for users because people act on bands (Good / Unhealthy / Hazardous), not only exact AQI.
+- +24h forecasts are the strongest, which is expected.
+- Error increases at +48h and +72h.
+- All horizons beat a simple persistence baseline in my evaluation.
+- Category accuracy matters because users care about bands (Good / Unhealthy / Hazardous), not only the exact number.
 
 ### 10.4 Live monitoring (forecast vs actual)
 
 From `artifacts/monitoring/summary.json`:
 
-| Scope | MAE | RMSE | R2 | Category Acc. | Scored rows |
+| Scope | MAE | RMSE | R² | Category Acc. | Scored rows |
 |---|---|---|---|---|---|
 | Overall | 12.33 | 19.32 | 0.744 | 74.8% | 3500 |
 | +24h | 10.42 | 15.84 | 0.830 | 78.8% | 1170 |
@@ -283,7 +279,7 @@ From `artifacts/monitoring/summary.json`:
 | Quetta | 14.51 | 71.1% | 700 |
 | Lahore | 16.36 | 68.3% | 700 |
 
-Karachi performs best in live monitoring. Lahore is the hardest city among the five.
+Karachi tracks best in live monitoring. Lahore is the hardest of the five cities.
 
 ---
 
@@ -292,122 +288,111 @@ Karachi performs best in live monitoring. Lahore is the hardest city among the f
 | Item | Value |
 |---|---|
 | Feature Group | aqi_features (v3) |
-| Feature contents | Engineered hourly features + targets for 5 cities |
+| Contents | Hourly features + targets for 5 cities |
 | Model Registry | aqi_forecast_model |
-| Bundle | Per-horizon winners synced by pipelines/hopsworks_sync.py |
+| Sync script | `pipelines/hopsworks_sync.py` |
 
-Production mode (`STORAGE_MODE=hopsworks`) loads features from Hopsworks and keeps an in-memory cache in the API for speed. Local parquet may still be used during training/sync jobs. The deployed app uses Hopsworks as the source of truth.
+In production (`STORAGE_MODE=hopsworks`) the API reads features from Hopsworks and caches them in memory. Training jobs can still use local parquet when needed.
 
 ---
 
 ## 12. Inference and API
 
-API module: `api/main.py`
+**File:** `api/main.py`
 
-### Core capabilities
+### What the API provides
 
-| Endpoint area | What it serves |
+| Area | Description |
 |---|---|
 | Forecast | Current AQI + 3-day forecast |
 | History | Recent AQI history |
-| Weather | Temperature, humidity, wind, pollutant driver |
-| Health tips / exercise | Practical guidance |
-| Alerts | Hazardous / unhealthy warnings |
-| Explain | Per-horizon SHAP (signed, waterfall, narrative) + city compare + global summary |
-| Leaderboard / ops / monitoring | Model and pipeline health |
+| Weather | Temperature, humidity, wind, pollutants |
+| Health tips / exercise | User guidance |
+| Alerts | Unhealthy / hazardous warnings |
+| Explain | Per-horizon SHAP, waterfall, narrative, city compare |
+| Leaderboard / ops / monitoring | Model and pipeline status |
 
-### Prediction flow
+### Prediction steps
 
-1. Load latest feature row for selected city
-2. Fill future-weather fields from Open-Meteo forecast
-3. Run the horizon-specific winner model
-4. Apply prediction interval
-5. Map AQI to EPA-style category + color
-6. Return JSON to the AtmoVista frontend
+1. Load the latest feature row for the city
+2. Fill future-weather fields from Open-Meteo
+3. Run the winner model for that horizon
+4. Add prediction interval
+5. Map AQI to category and color
+6. Return JSON to the frontend
 
 ---
 
-## 13. AtmoVista dashboard (frontend)
+## 13. AtmoVista dashboard
 
-Built with React + Vite + TypeScript and deployed on Vercel.
+Built with React + Vite + TypeScript, hosted on Vercel.
 
-### For you (everyday mode)
+### For you
 
-- Pakistan live map + city rankings
-- Current AQI gauge with category bands
-- Weather strip (temperature / humidity / wind / clouds / rain / pressure)
-- Pollutant breakdown bars + dominant pollutant insight
-- Next 3 days outlook with calendar dates
-- Confidence / peak / improvement insights
-- Health tips, watch-ahead cards, alerts
-- Exercise advice + smog season panel
-- City watchlist
+- Pakistan map and city rankings
+- Current AQI gauge
+- Weather and pollutant breakdown
+- 3-day outlook with dates
+- Health tips, alerts, exercise advice
+- Smog season panel and city watchlist
 
-### For experts (technical mode)
+### For experts
 
-- Ops strip (storage mode, model, sync)
-- Beat-the-baseline panel
-- Pipeline health board
+- Ops strip (storage, model, last sync)
+- Baseline comparison and pipeline health
 - Model leaderboard
-- XAI: per-horizon SHAP (+24h / +48h / +72h), signed local drivers, waterfall, narrative
-- Global training drivers, city SHAP compare, feature glossary on hover
-- Pollutant ↔ SHAP agreement note
-- Live accuracy table (forecast vs actual)
+- SHAP (+24h / +48h / +72h), signed drivers, waterfall, narrative
+- Global training drivers, city compare, feature glossary
+- Live accuracy (forecast vs actual)
 
-### UX extras
+### Other UI features
 
 - Dark / light theme
-- Scroll reveal interactions
-- Shareable PNG forecast card + TXT export
-- Relative + absolute timestamps / horizon dates
+- Shareable forecast PNG export
+- Pakistan timezone on dates and horizons
 
 ---
 
 ## 14. Alerts and health guidance
 
-| Feature | Behavior |
+| Feature | What it does |
 |---|---|
-| Alerts | Shown when current or forecast AQI reaches unhealthy/hazardous levels, with horizon and calendar date |
-| Health tips | Category-based guidance for masking, outdoor exposure, windows, and sensitive groups |
-| Exercise advice | Decision card for whether outdoor exercise is advisable based on current and near-term AQI |
+| Alerts | Warn when current or forecast AQI is unhealthy or hazardous |
+| Health tips | Advice by AQI category (masking, windows, sensitive groups) |
+| Exercise advice | Suggests whether outdoor exercise is reasonable |
 
 ---
 
 ## 15. Explainability (SHAP)
 
-Implemented in `src/inference/explain.py` and shown in the expert dashboard (`/aqi/explain`, plus compare/global helpers).
+**Code:** `src/inference/explain.py`  
+**UI:** Experts mode, `/aqi/explain`
 
 | View | Purpose |
 |---|---|
-| Per-horizon tabs | Separate explanations for +24h, +48h, and +72h winners |
-| City-level importance | Mean \|SHAP\| over recent city rows — which features generally matter |
-| Signed local explanation | Latest-hour SHAP with direction (↑ raises AQI, ↓ lowers AQI) |
-| Waterfall | Step path from baseline value to the predicted AQI |
-| Plain-language narrative | Short sentence summarizing the top drivers |
-| Global training drivers | Surfaces `artifacts/shap_summary.json` from the latest training run |
-| City compare | Top SHAP drivers side-by-side across Pakistan cities |
-| Feature glossary | Hover tooltips explain lag / weather / pollutant feature names |
-| Pollutant link | Notes whether live chemistry and SHAP drivers point to the same family of signals |
+| Per-horizon tabs | SHAP for +24h, +48h, +72h models |
+| City-level importance | Mean \|SHAP\| over recent rows |
+| Signed local SHAP | Latest hour — ↑ raises AQI, ↓ lowers |
+| Waterfall | Baseline → prediction steps |
+| Narrative | Short summary of top drivers |
+| Global drivers | From `artifacts/shap_summary.json` |
+| City compare | Top drivers across cities |
+| Glossary | Tooltips on feature names |
+| Pollutant link | Compare SHAP with live pollutant readings |
 
-Typical important drivers include recent AQI/PM lags, rolling AQI statistics, and weather-linked features.
+Common drivers in my models: recent AQI/PM lags, rolling AQI stats, and weather features.
 
 ---
 
-## 16. Automation / CI-CD (GitHub Actions)
+## 16. Automation (GitHub Actions)
 
-The repository is on GitHub. Scheduled workflows keep the system updated.
-
-| Workflow | Schedule | What it does |
+| Workflow | Schedule | Task |
 |---|---|---|
-| feature-hourly.yml | Hourly | Refresh features + reconcile monitoring |
-| training-daily.yml | Daily | Retrain models + sync to Hopsworks |
-| monitor-daily.yml | Daily | Maintain scored forecast-vs-actual history |
+| feature-hourly.yml | Hourly | Refresh features + monitoring |
+| training-daily.yml | Daily | Retrain + sync to Hopsworks |
+| monitor-daily.yml | Daily | Update forecast vs actual log |
 
-Repository secrets used by Actions:
-
-- `HOPSWORKS_API_KEY`
-- `HOPSWORKS_PROJECT`
-- `HOPSWORKS_HOST` (optional)
+Secrets: `HOPSWORKS_API_KEY`, `HOPSWORKS_PROJECT`, `HOPSWORKS_HOST` (optional).
 
 ---
 
@@ -415,73 +400,62 @@ Repository secrets used by Actions:
 
 | Service | Platform | Status |
 |---|---|---|
-| AtmoVista frontend | Vercel | Deployed |
-| FastAPI backend | Render (`render.yaml`, Standard for reliable demo) | Deployed |
-| Feature store / model registry | Hopsworks | Live production source of truth |
+| AtmoVista UI | Vercel | Live |
+| FastAPI API | Render (Standard plan for stable demos) | Live |
+| Features / models | Hopsworks | Production source |
 
-Production configuration:
+- Render: `STORAGE_MODE=hopsworks`, Hopsworks credentials in env
+- Vercel: `VITE_API_URL` points to Render API
+- CORS allows the Vercel domain
 
-- Render uses `STORAGE_MODE=hopsworks` and Hopsworks credentials
-- Vercel uses `VITE_API_URL` pointing to the Render API
-- CORS allows the Vercel frontend origin
+**Live links:** https://atmovista.vercel.app · API health on Render
 
 ---
 
-## 18. Creative / unique additions (beyond minimum brief)
+## 18. Extra features (beyond basic brief)
 
-| Addition | Why it helps |
+| Feature | Reason |
 |---|---|
-| 5 Pakistan cities | Broader coverage than a single-city demo |
-| Dual audience UI | Everyday users and technical reviewers |
-| Live weather + pollutant breakdown | Context around the AQI number |
-| Richer XAI (signed SHAP, waterfall, narrative) | Clearer trust for technical reviewers |
-| Prediction confidence bands | Uncertainty communication |
-| Peak / improvement insights | Actionable short-term planning |
-| Smog season calendar | Seasonal awareness |
-| Exercise recommendation | Practical health decision |
-| Live monitoring board | Forecast vs actual trust check |
-| Beat-persistence baseline | Shows model value clearly |
-| City watchlist | Personalization |
-| Calendar dates on horizons | Clearer forecast timing |
+| 5 Pakistan cities | More useful than single-city demo |
+| Two UI modes | Everyday users + technical review |
+| Pollutant breakdown | Context around the AQI number |
+| Signed SHAP + waterfall | Clearer explainability |
+| Confidence bands | Show uncertainty |
+| Smog season + exercise cards | Practical for users |
+| Live monitoring | Compare forecasts to what actually happened |
+| Beat-persistence baseline | Show the model adds value |
 
 ---
 
 ## 19. Limitations
 
-1. Open-Meteo AQI is model-based and may differ from local ground stations.
-2. Longer horizons (+48h / +72h) have higher error by nature.
-3. Hopsworks free-plan usage limits, and hosting plan choices (Render/Vercel), can still affect latency and cost if left on always-on Standard longer than needed.
-4. Deep learning (LSTM) was trained and compared, but classical models currently win most horizons on this dataset.
+1. Open-Meteo AQI is model-based, not always the same as a local sensor.
+2. +48h and +72h errors are naturally higher.
+3. Hopsworks free usage and hosting costs (Render Standard) need to be watched.
+4. LSTM was trained but classical models won on most horizons for this data.
 
 ---
 
 ## 20. Future work
 
-1. Fuse station-level AQI (where available) for calibration
-2. Probabilistic category forecasts (not only point AQI)
-3. City-specific specialist models
-4. Push notifications for hazardous alerts
-5. Longer live monitoring window for stronger trust metrics
-6. Stronger uptime monitoring for the public demo
+1. Add ground-station AQI where available
+2. Category probability forecasts
+3. City-specific models
+4. Push notifications for alerts
+5. Longer monitoring history
+6. Better uptime checks for the public demo
 
 ---
 
 ## 21. Conclusion
 
-AtmoVista completes the internship requirements for an end-to-end AQI prediction system: data ingestion, feature store, multi-model training, registry, automation, explainability, alerts, and an interactive dashboard. The project is implemented, pushed to GitHub, automated with GitHub Actions, and deployed with Render + Vercel + Hopsworks.
+I completed the internship project as a full AQI forecasting pipeline: data, features, training, Hopsworks, automation, explainability, alerts, and a deployed dashboard. The app is on GitHub and runs live on Render and Vercel.
 
-Beyond the minimum, it adds a dual-mode product experience focused on Pakistan cities, with measurable results and live monitoring.
-
-Key numbers:
-
-- Strongest forecasts at +24h (validation R2 about 0.72, category accuracy about 73%)
-- Live monitoring over 3500 scored rows: overall MAE about 12.3, category accuracy about 75%
-
-These results support practical short-term planning and health guidance.
+The best results are at +24h (validation R² ≈ 0.72, category accuracy ≈ 73%). Live monitoring on 3500 scored rows shows overall MAE ≈ 12.3 and category accuracy ≈ 75%. I think this is good enough for short-term air quality planning in the cities I covered.
 
 ---
 
-## 22. Appendix — important files
+## 22. Appendix — main files
 
 | Path | Role |
 |---|---|
@@ -494,9 +468,9 @@ These results support practical short-term planning and health guidance.
 | frontend/src/App.tsx | AtmoVista dashboard |
 | artifacts/model_leaderboard.json | Training results |
 | notebooks/eda.ipynb | EDA |
-| .github/workflows/ | CI/CD automation |
+| .github/workflows/ | CI/CD |
 | docs/AtmoVista_Internship_Report.pdf | This report |
 
 ---
 
-*Report prepared for internship submission — AtmoVista / Pearls AQI Predictor.*
+*AtmoVista / Pearls AQI Predictor — internship submission.*

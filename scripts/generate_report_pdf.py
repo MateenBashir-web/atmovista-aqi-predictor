@@ -108,54 +108,59 @@ def main() -> None:
     h1(pdf, "AtmoVista - Internship Project Report")
     body(
         pdf,
-        "End-to-end AQI forecasting for Pakistan with MLOps, live deployment, and GitHub Actions automation.",
+        "AQI forecasting for Pakistan with MLOps, live deployment, and GitHub Actions automation.",
     )
     meta_line(pdf, "Project title:", "AtmoVista (Pearls AQI Predictor)")
     meta_line(pdf, "Forecast window:", "Next 3 days (+24h, +48h, +72h)")
     meta_line(pdf, "Cities:", "Lahore, Karachi, Islamabad, Peshawar, Quetta")
-    meta_line(pdf, "Repository:", "Hosted on GitHub with GitHub Actions CI/CD")
-    meta_line(pdf, "Deployment:", "API on Render, frontend on Vercel, features/models on Hopsworks")
+    meta_line(pdf, "Repository:", "GitHub (with GitHub Actions)")
+    meta_line(pdf, "Deployment:", "API on Render, UI on Vercel, features/models on Hopsworks")
     pdf.ln(2)
 
     h2(pdf, "1. Introduction")
     body(
         pdf,
-        "AtmoVista is an end-to-end machine learning system that predicts Air Quality Index (AQI) "
-        "for five major Pakistan cities over the next three days. The full pipeline is implemented, "
-        "pushed to GitHub, automated with GitHub Actions, and deployed for live use.",
+        "For my internship project I built AtmoVista, a system that forecasts Air Quality Index (AQI) "
+        "for five major cities in Pakistan over the next three days. I collected data, engineered "
+        "features, trained and compared multiple models, stored everything in Hopsworks, and deployed "
+        "a working web app that can be opened live.",
     )
-    body(pdf, "The system includes:")
+    body(pdf, "The main parts of the project are:")
     for item in [
-        "automated data collection",
-        "feature engineering and historical backfill",
-        "multi-model training and evaluation",
+        "data collection from Open-Meteo",
+        "feature engineering and backfill",
+        "model training (Ridge, Random Forest, HistGradientBoosting, LSTM)",
         "Hopsworks feature store and model registry",
-        "CI/CD with GitHub Actions (hourly features + daily training)",
-        "interactive AtmoVista web dashboard (FastAPI + React)",
+        "GitHub Actions for hourly features and daily training",
+        "FastAPI backend + React frontend (AtmoVista dashboard)",
     ]:
         bullet(pdf, item)
     pdf.ln(1)
     body(
         pdf,
-        "The goal is practical: help everyday users understand current and upcoming air quality, "
-        "while also showing model performance and explainability for technical review.",
+        "I wanted the app to be useful for normal users (current AQI, 3-day outlook, health tips) "
+        "and also clear enough for technical review (model scores, SHAP, monitoring).",
     )
 
     h2(pdf, "2. Problem statement")
-    body(pdf, "Air quality in Pakistan varies strongly by city and season. A useful system should:")
+    body(
+        pdf,
+        "Air quality in Pakistan changes a lot between cities and seasons, especially during smog months. "
+        "Based on the internship brief, I focused on these requirements:",
+    )
     for item in [
-        "Forecast AQI for the next 24, 48, and 72 hours",
-        "Update regularly with fresh data",
-        "Explain predictions (not just show a number)",
-        "Alert when conditions become unhealthy or hazardous",
-        "Run on a free / serverless-friendly stack",
+        "Forecast AQI for +24h, +48h, and +72h",
+        "Keep data updated on a schedule",
+        "Explain why the model predicts a certain level (SHAP / XAI)",
+        "Show alerts for unhealthy or hazardous air",
+        "Use tools that work on free or low-cost hosting",
     ]:
         bullet(pdf, item)
     pdf.ln(1)
     body(
         pdf,
-        "AtmoVista addresses these needs with an MLOps pipeline and a dual-mode dashboard "
-        "(For you / For experts).",
+        "AtmoVista covers these through a full pipeline and a dashboard with two modes: "
+        "For you (everyday use) and For experts (models, explainability, accuracy).",
     )
 
     h2(pdf, "3. Objectives completed")
@@ -163,28 +168,28 @@ def main() -> None:
         pdf,
         [
             ["Objective", "Status"],
-            ["Predict AQI for next 3 days", "Completed"],
-            ["Feature pipeline (fetch to feature store)", "Completed"],
-            ["Historical backfill for training", "Completed"],
-            ["Train and evaluate multiple models", "Completed"],
-            ["Store models in model registry", "Completed"],
-            ["Automate hourly and daily pipelines", "Completed and running"],
-            ["Interactive AtmoVista dashboard", "Completed"],
-            ["EDA", "Completed"],
-            ["SHAP explainability", "Completed"],
-            ["Hazardous AQI alerts", "Completed"],
-            ["GitHub + Render + Vercel + Hopsworks", "Completed"],
+            ["Predict AQI for next 3 days", "Done"],
+            ["Feature pipeline (fetch to feature store)", "Done"],
+            ["Historical backfill for training", "Done"],
+            ["Train and evaluate multiple models", "Done"],
+            ["Store models in model registry", "Done"],
+            ["Automate hourly and daily pipelines", "Done"],
+            ["Interactive AtmoVista dashboard", "Done"],
+            ["EDA", "Done"],
+            ["SHAP explainability", "Done"],
+            ["Hazardous AQI alerts", "Done"],
+            ["GitHub + Render + Vercel + Hopsworks", "Done"],
         ],
         col_widths=(2.4, 1.2),
     )
     body(
         pdf,
-        "UI note: The brief mentions Streamlit/Gradio. This project uses FastAPI + React because "
-        "the mentor allowed a stronger custom frontend for higher UI marks.",
+        "The brief suggested Streamlit or Gradio. My mentor allowed FastAPI + React instead, "
+        "so I built a custom UI for better presentation marks.",
     )
 
     h2(pdf, "4. System overview")
-    body(pdf, "AtmoVista follows this flow in production:")
+    body(pdf, "This is how the deployed system works:")
     for item in [
         "Open-Meteo APIs provide pollutant and weather data",
         "Feature and backfill pipelines engineer hourly features",
@@ -217,16 +222,16 @@ def main() -> None:
     draw_table(
         pdf,
         [
-            ["Area", "Choice", "Reason"],
+            ["Area", "Choice", "Why I used it"],
             ["Language", "Python", "Required for ML pipelines"],
             ["Classical ML", "Scikit-learn", "Ridge / RF / HistGB"],
-            ["Deep learning", "TensorFlow LSTM", "Advanced model requirement"],
-            ["Feature store", "Hopsworks", "Feature Store + Model Registry"],
-            ["Orchestration", "GitHub Actions", "Free CI/CD alternative to Airflow"],
-            ["API", "FastAPI", "Backend for serving forecasts"],
-            ["UI", "React + Vite + TypeScript", "Mentor-approved custom frontend"],
-            ["Explainability", "SHAP (local + global)", "Per-horizon signed drivers / XAI"],
-            ["Deploy", "Render + Vercel", "Production hosting (Render Standard for demo)"],
+            ["Deep learning", "TensorFlow LSTM", "Required advanced model"],
+            ["Feature store", "Hopsworks", "Feature Store + Model Registry in brief"],
+            ["Orchestration", "GitHub Actions", "Free CI/CD (instead of Airflow)"],
+            ["API", "FastAPI", "Serve forecasts to the UI"],
+            ["UI", "React + Vite + TypeScript", "Custom frontend (mentor approved)"],
+            ["Explainability", "SHAP", "Required XAI; per-horizon signed drivers"],
+            ["Deploy", "Render + Vercel", "Host API and frontend"],
         ],
         col_widths=(1.1, 1.4, 1.5),
     )
@@ -234,8 +239,9 @@ def main() -> None:
     h2(pdf, "6. Data collection")
     body(
         pdf,
-        "Source: Open-Meteo Air Quality API and Weather API (free, no paid key). "
-        "The brief lists AQICN/OpenWeather as examples and allows exploring other options.",
+        "I used the Open-Meteo Air Quality API and Weather API because they are free and do not "
+        "need a paid key. The brief mentioned AQICN/OpenWeather as examples; Open-Meteo was enough "
+        "for this project.",
     )
     h3(pdf, "Pollutants / AQI")
     for item in ["PM2.5, PM10, CO, NO2, SO2, O3", "US AQI (preferred) / European AQI fallback"]:
@@ -273,7 +279,7 @@ def main() -> None:
     )
 
     h2(pdf, "7. Feature engineering")
-    body(pdf, "Implemented in src/features/engineering.py.")
+    body(pdf, "I implemented features in src/features/engineering.py.")
     draw_table(
         pdf,
         [
@@ -290,21 +296,21 @@ def main() -> None:
     )
     body(pdf, "Design choices:")
     for item in [
-        "Per-horizon models instead of one multi-output model (better accuracy)",
-        "Realistic mode adds controlled noise to future-weather features during training",
-        "Prediction intervals (80%) estimated from validation residuals",
+        "Separate model per horizon (+24h, +48h, +72h) - better accuracy in my experiments",
+        "Controlled noise on future-weather features during training (realistic mode)",
+        "Prediction intervals (80%) from validation residuals",
     ]:
         bullet(pdf, item)
 
     h2(pdf, "8. Exploratory data analysis (EDA)")
     body(pdf, "EDA notebook: notebooks/eda.ipynb. Plots include timeseries, correlation heatmap, seasonality, and city boxplots.")
-    body(pdf, "Key findings:")
+    body(pdf, "What I found:")
     for item in [
-        "Lahore has the highest median AQI and widest spread (strong smog spikes).",
-        "Karachi is the most stable city with the lowest mean AQI in this dataset.",
-        "PM2.5 and PM10 are the strongest linear correlates of AQI.",
-        "Evening/night hours and winter months (Nov to Jan) tend toward higher mean AQI.",
-        "City-specific behavior justifies shared features but different error profiles.",
+        "Lahore has the highest median AQI and the biggest spikes (smog).",
+        "Karachi is the most stable city with the lowest mean AQI in my dataset.",
+        "PM2.5 and PM10 correlate most strongly with AQI.",
+        "Evening/night and winter months (Nov to Jan) tend to have higher AQI on average.",
+        "Each city behaves differently, so error varies by city.",
     ]:
         bullet(pdf, item)
     pdf.ln(1)
@@ -394,12 +400,12 @@ def main() -> None:
         ],
         col_widths=(0.7, 0.8, 0.7, 0.7, 0.7, 1.0),
     )
-    h3(pdf, "10.3 Interpretation")
+    h3(pdf, "10.3 My reading of the results")
     for item in [
-        "Short-horizon (+24h) forecasts are clearly strongest.",
-        "Error grows with horizon, which is expected for air-quality forecasting.",
-        "Models beat a simple persistence baseline on the tracked horizons.",
-        "Category accuracy matters because users act on bands, not only exact AQI.",
+        "+24h forecasts are the strongest, which is expected.",
+        "Error increases at +48h and +72h.",
+        "All horizons beat a simple persistence baseline in my evaluation.",
+        "Category accuracy matters because users care about bands, not only the exact number.",
     ]:
         bullet(pdf, item)
     pdf.ln(1)
@@ -429,7 +435,7 @@ def main() -> None:
         ],
         col_widths=(1.2, 0.8, 1.1, 1.0),
     )
-    body(pdf, "Karachi performs best in live monitoring. Lahore is the hardest city among the five.")
+    body(pdf, "Karachi tracks best in live monitoring. Lahore is the hardest of the five cities.")
 
     h2(pdf, "11. Feature store and model registry (Hopsworks)")
     draw_table(
@@ -445,8 +451,8 @@ def main() -> None:
     )
     body(
         pdf,
-        "Production mode (STORAGE_MODE=hopsworks) loads features from Hopsworks and keeps an "
-        "in-memory cache in the API. The deployed app uses Hopsworks as the source of truth.",
+        "In production (STORAGE_MODE=hopsworks) the API reads features from Hopsworks and caches "
+        "them in memory. Training jobs can still use local parquet when needed.",
     )
 
     h2(pdf, "12. Inference and API")
@@ -534,8 +540,7 @@ def main() -> None:
     )
     body(
         pdf,
-        "Typical important drivers include recent AQI/PM lags, rolling AQI statistics, "
-        "and weather-linked features.",
+        "Common drivers in my models: recent AQI/PM lags, rolling AQI stats, and weather features.",
     )
 
     h2(pdf, "16. Automation / CI-CD (GitHub Actions)")
@@ -571,34 +576,29 @@ def main() -> None:
     ]:
         bullet(pdf, item)
 
-    h2(pdf, "18. Creative / unique additions")
+    h2(pdf, "18. Extra features (beyond basic brief)")
     draw_table(
         pdf,
         [
-            ["Addition", "Why it helps"],
-            ["5 Pakistan cities", "Broader coverage than a single-city demo"],
-            ["Dual audience UI", "Everyday users and technical reviewers"],
-            ["Live weather + pollutant breakdown", "Context around the AQI number"],
-            ["Richer XAI (signed SHAP, waterfall, narrative)", "Clearer trust for technical reviewers"],
-            ["Prediction confidence bands", "Uncertainty communication"],
-            ["Peak / improvement insights", "Actionable short-term planning"],
-            ["Smog season calendar", "Seasonal awareness"],
-            ["Exercise recommendation", "Practical health decision"],
-            ["Live monitoring board", "Forecast vs actual trust check"],
-            ["Beat-persistence baseline", "Shows model value clearly"],
-            ["City watchlist", "Personalization"],
-            ["Calendar dates on horizons", "Clearer forecast timing"],
+            ["Feature", "Reason"],
+            ["5 Pakistan cities", "More useful than single-city demo"],
+            ["Two UI modes", "Everyday users + technical review"],
+            ["Pollutant breakdown", "Context around the AQI number"],
+            ["Signed SHAP + waterfall", "Clearer explainability"],
+            ["Confidence bands", "Show uncertainty"],
+            ["Smog season + exercise cards", "Practical for users"],
+            ["Live monitoring", "Compare forecasts to actual AQI"],
+            ["Beat-persistence baseline", "Show the model adds value"],
         ],
         col_widths=(1.5, 2.5),
     )
 
     h2(pdf, "19. Limitations")
     for item in [
-        "Open-Meteo AQI is model-based and may differ from local ground stations.",
-        "Longer horizons (+48h / +72h) have higher error by nature.",
-        "Hopsworks free-plan usage limits, and hosting plan choices (Render/Vercel), "
-        "can still affect latency and cost if left on always-on Standard longer than needed.",
-        "LSTM was trained and compared, but classical models currently win most horizons.",
+        "Open-Meteo AQI is model-based, not always the same as a local sensor.",
+        "+48h and +72h errors are naturally higher.",
+        "Hopsworks free usage and hosting costs (Render Standard) need to be watched.",
+        "LSTM was trained but classical models won on most horizons for this data.",
     ]:
         bullet(pdf, item)
 
@@ -616,19 +616,21 @@ def main() -> None:
     h2(pdf, "21. Conclusion")
     body(
         pdf,
-        "AtmoVista completes the internship requirements for an end-to-end AQI prediction system: "
-        "data ingestion, feature store, multi-model training, registry, automation, explainability, "
-        "alerts, and an interactive dashboard. The project is implemented, pushed to GitHub, "
-        "automated with GitHub Actions, and deployed with Render + Vercel + Hopsworks.",
+        "I completed the internship project as a full AQI forecasting pipeline: data, features, "
+        "training, Hopsworks, automation, explainability, alerts, and a deployed dashboard. "
+        "The app is on GitHub and runs live on Render and Vercel.",
     )
-    body(pdf, "Key numbers:")
+    body(pdf, "Main results:")
     for item in [
-        "Strongest forecasts at +24h (validation R2 about 0.72, category accuracy about 73%)",
-        "Live monitoring over 3500 scored rows: overall MAE about 12.3, category accuracy about 75%",
+        "Best results at +24h (validation R2 about 0.72, category accuracy about 73%)",
+        "Live monitoring on 3500 scored rows: overall MAE about 12.3, category accuracy about 75%",
     ]:
         bullet(pdf, item)
     pdf.ln(1)
-    body(pdf, "These results support practical short-term planning and health guidance.")
+    body(
+        pdf,
+        "I think this is good enough for short-term air quality planning in the cities I covered.",
+    )
 
     h2(pdf, "22. Appendix - important files")
     draw_table(
@@ -653,7 +655,7 @@ def main() -> None:
     pdf.ln(2)
     pdf.set_font("Helvetica", "I", 9)
     pdf.set_text_color(90, 90, 90)
-    pdf.multi_cell(0, 5, "Report prepared for internship submission - AtmoVista / Pearls AQI Predictor.")
+    pdf.multi_cell(0, 5, "AtmoVista / Pearls AQI Predictor - internship submission.")
 
     pdf.output(str(OUT))
     print(f"Wrote {OUT} ({OUT.stat().st_size} bytes)")
