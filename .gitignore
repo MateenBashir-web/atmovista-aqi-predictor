@@ -48,6 +48,9 @@ data/processed/*
 !docs/
 !docs/**
 
+# Local-only report tooling (PDF kept in docs/)
+scripts/generate_report_pdf.py
+
 artifacts/models/*
 !artifacts/models/.gitkeep
 !artifacts/models/winner.json
