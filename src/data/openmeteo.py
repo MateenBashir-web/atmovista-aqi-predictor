@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
+import json
 import time
 
 import pandas as pd
@@ -44,8 +45,15 @@ def _get_json(
         try:
             response = requests.get(url, params=params, timeout=timeout)
             response.raise_for_status()
+            if not (response.text or "").strip():
+                raise requests.exceptions.JSONDecodeError("Empty response", response.text or "", 0)
             return response.json()
-        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as exc:
+        except (
+            requests.exceptions.Timeout,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.JSONDecodeError,
+            json.JSONDecodeError,
+        ) as exc:
             last_error = exc
             if attempt >= retries:
                 break

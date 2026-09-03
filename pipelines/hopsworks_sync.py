@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -71,24 +72,35 @@ def register_models(config: dict | None = None) -> dict:
             raise FileNotFoundError(f"No winner model files found in {model_dir}")
 
         print(f"[hopsworks] Registering winner bundle ({len(copied)} files): {copied}")
-        project = get_hopsworks_project(cfg)
-        mr = project.get_model_registry()
-        model = mr.python.create_model(
-            name=cfg["model_name"],
-            metrics=metrics,
-            description=description,
-        )
-        model.save(str(bundle))
-        version = getattr(model, "version", None)
-        print(f"[hopsworks] Model registered: {cfg['model_name']} v{version}")
-        return {
-            "registered": True,
-            "name": cfg["model_name"],
-            "version": version,
-            "metrics": metrics,
-            "winner": meta.get("name"),
-            "files": copied,
-        }
+        last_error: Exception | None = None
+        for attempt in range(1, 5):
+            try:
+                project = get_hopsworks_project(cfg)
+                mr = project.get_model_registry()
+                model = mr.python.create_model(
+                    name=cfg["model_name"],
+                    metrics=metrics,
+                    description=description,
+                )
+                model.save(str(bundle))
+                version = getattr(model, "version", None)
+                print(f"[hopsworks] Model registered: {cfg['model_name']} v{version}")
+                return {
+                    "registered": True,
+                    "name": cfg["model_name"],
+                    "version": version,
+                    "metrics": metrics,
+                    "winner": meta.get("name"),
+                    "files": copied,
+                }
+            except Exception as exc:
+                last_error = exc
+                print(f"[hopsworks] Model upload attempt {attempt}/4 failed: {type(exc).__name__}: {exc}")
+                if attempt >= 4:
+                    break
+                time.sleep(min(20 * attempt, 60))
+        assert last_error is not None
+        raise last_error
 
 def verify_hopsworks(config: dict | None = None) -> dict:
     cfg = config or load_config()

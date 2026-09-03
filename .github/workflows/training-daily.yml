@@ -42,7 +42,13 @@ jobs:
           HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
           HOPSWORKS_PROJECT: ${{ secrets.HOPSWORKS_PROJECT }}
           STORAGE_MODE: hopsworks
-        run: python pipelines/hopsworks_sync.py
+        run: |
+          for i in 1 2 3; do
+            python pipelines/hopsworks_sync.py && exit 0
+            echo "Hopsworks sync attempt $i failed; retrying in 45s"
+            sleep 45
+          done
+          python pipelines/hopsworks_sync.py
 
       - name: Seed / refresh monitoring scores
         env:
