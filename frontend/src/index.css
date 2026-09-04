@@ -3548,9 +3548,8 @@ select {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.65rem;
-  width: min(360px, calc(100vw - 1.7rem));
-  max-height: calc(100dvh - 5.75rem);
+  gap: 0.55rem;
+  width: min(340px, calc(100vw - 1.7rem));
   pointer-events: none;
 }
 
@@ -3597,9 +3596,8 @@ select {
 
 .copilot-window {
   width: 100%;
-  min-height: 0;
-  flex: 1 1 auto;
-  max-height: calc(100dvh - 5.75rem - 3.6rem);
+  height: min(400px, calc(100dvh - 10rem));
+  max-height: min(400px, calc(100dvh - 10rem));
   display: flex;
   flex-direction: column;
   border-radius: 16px;
@@ -3680,7 +3678,22 @@ select {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0.75rem 0.85rem;
+  padding: 0.7rem 0.8rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 157, 181, 0.4) transparent;
+}
+
+.copilot-thread::-webkit-scrollbar {
+  width: 6px;
+}
+
+.copilot-thread::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.copilot-thread::-webkit-scrollbar-thumb {
+  background: rgba(139, 157, 181, 0.35);
+  border-radius: 999px;
 }
 
 .copilot-empty {
@@ -3844,12 +3857,12 @@ select {
   .copilot-dock {
     left: max(0.65rem, env(safe-area-inset-left, 0px));
     bottom: max(0.65rem, env(safe-area-inset-bottom, 0px));
-    width: min(100vw - 1.3rem, 360px);
-    max-height: calc(100dvh - 5.25rem);
+    width: min(100vw - 1.3rem, 340px);
   }
 
   .copilot-window {
-    max-height: calc(100dvh - 5.25rem - 3.4rem);
+    height: min(360px, calc(100dvh - 8.75rem));
+    max-height: min(360px, calc(100dvh - 8.75rem));
   }
 
   .copilot-fab-label {

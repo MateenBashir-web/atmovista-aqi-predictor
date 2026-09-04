@@ -157,7 +157,7 @@ export function CopilotPanel({ city }: Props) {
             <div ref={bottomRef} />
           </div>
 
-          {!!suggestions.length && (
+          {!!suggestions.length && messages.length < 2 && (
             <div className="copilot-suggestions">
               {suggestions.map((s) => (
                 <button
@@ -199,18 +199,20 @@ export function CopilotPanel({ city }: Props) {
         </div>
       )}
 
-      <button
-        type="button"
-        className="copilot-fab"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-label={open ? "Close AQI Copilot" : "Open AQI Copilot"}
-      >
-        <span className="copilot-fab-icon" aria-hidden="true">
-          {open ? "×" : "✦"}
-        </span>
-        <span className="copilot-fab-label">{open ? "Close" : "Ask air"}</span>
-      </button>
+      {!open && (
+        <button
+          type="button"
+          className="copilot-fab"
+          onClick={() => setOpen(true)}
+          aria-expanded={false}
+          aria-label="Open AQI Copilot"
+        >
+          <span className="copilot-fab-icon" aria-hidden="true">
+            ✦
+          </span>
+          <span className="copilot-fab-label">Ask air</span>
+        </button>
+      )}
     </div>
   );
 }
