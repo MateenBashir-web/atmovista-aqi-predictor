@@ -310,7 +310,7 @@ In production (`STORAGE_MODE=hopsworks`) the API reads features from Hopsworks a
 | Weather | Temperature, humidity, wind, pollutants |
 | Health tips / exercise | User guidance |
 | Alerts | Unhealthy / hazardous warnings |
-| Copilot | Floating chat over live city data (Groq + fallback) |
+| Copilot | Floating chat over live city data (forecast, history, smog, SHAP, models) |
 | Explain | Per-horizon SHAP, waterfall, narrative, city compare |
 | Leaderboard / ops / monitoring | Model and pipeline status |
 
@@ -363,11 +363,13 @@ Built with React + Vite + TypeScript, hosted on Vercel.
 | Alerts | Warn when current or forecast AQI is unhealthy or hazardous |
 | Health tips | Advice by AQI category (masking, windows, sensitive groups) |
 | Exercise advice | Suggests whether outdoor exercise is reasonable |
-| AQI Copilot | Chat helper for the selected city; uses live forecast/weather/tips |
+| AQI Copilot | Chat helper for the selected city; uses live forecast, weather, tips, history, smog season, SHAP, and model accuracy |
 
-I added the copilot so people can ask simple questions (exercise, next 24 hours, what to do now) without digging through every panel. It is a floating button on the bottom-left, like most websites. Backend endpoint: `POST /insights/copilot`.
+I added the copilot so people can ask questions without digging through every panel. It is a floating button on the bottom-left. Backend endpoint: `POST /insights/copilot`.
 
-For the LLM I used **Groq** (free tier, model `openai/gpt-oss-20b`). The key stays on the Render API only. If Groq is down or the key is missing, the same endpoint falls back to rule-based answers from AtmoVista data so the chat still works.
+It is grounded in live AtmoVista data for the selected city: current AQI and 3-day forecast, weather/pollutants, health and exercise tips, alerts, recent history summary, smog-season monthly patterns, SHAP drivers (+24h), and model leaderboard / live accuracy.
+
+For the LLM I used **Groq** (free tier, model `openai/gpt-oss-20b`). The key stays on the Render API only. If Groq is down or the key is missing, the same endpoint falls back to rule-based answers from that same context so the chat still works.
 
 ---
 
@@ -430,7 +432,7 @@ Secrets: `HOPSWORKS_API_KEY`, `HOPSWORKS_PROJECT`, `HOPSWORKS_HOST` (optional).
 | Signed SHAP + waterfall | Clearer explainability |
 | Confidence bands | Show uncertainty |
 | Smog season + exercise cards | Practical for users |
-| AQI Copilot (Groq + fallback) | Quick Q&A from live city data |
+| AQI Copilot (Groq + fallback) | Q&A from live city data incl. history, smog, SHAP, models |
 | Live monitoring | Compare forecasts to what actually happened |
 | Beat-persistence baseline | Show the model adds value |
 
@@ -466,7 +468,7 @@ I used SHAP because the brief asked for XAI. I went beyond a single bar chart: *
 
 ### Copilot (Groq + fallback)
 
-I added a floating chat so users can ask simple questions without scrolling every panel. I chose **Groq** for a free, fast chat API. The key stays on Render only. I also kept a **rule-based fallback** so the chat still works if the LLM is down or the model name changes.
+I added a floating chat so users can ask questions without scrolling every panel. I chose **Groq** for a free, fast chat API. The key stays on Render only. The chat is grounded in live city data (forecast, weather, tips, history, smog season, SHAP, model accuracy), with a **rule-based fallback** if the LLM is down or the model name changes.
 
 ### Render Standard + Vercel
 

@@ -97,7 +97,6 @@ def _smog_summary(config: dict[str, Any]) -> dict[str, Any] | None:
 def _shap_summary(city: str, config: dict[str, Any]) -> dict[str, Any] | None:
     from src.inference.explain import explain_city, global_shap_summary
 
-    # Primary +24h only for speed; cache in explain.py helps repeat asks.
     pack = explain_city(city, config, horizon_hours=24, include_all_horizons=False)
     if not pack:
         return None
