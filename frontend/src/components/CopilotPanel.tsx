@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { api, type CopilotResponse } from "../api";
 
 type ChatMsg = {
@@ -16,6 +16,53 @@ const STARTERS = [
 type Props = {
   city: string;
 };
+
+function renderInline(text: string): ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
+function FormattedReply({ text }: { text: string }) {
+  const blocks = text
+    .replace(/\r\n/g, "\n")
+    .trim()
+    .split(/\n{2,}/)
+    .map((b) => b.trim())
+    .filter(Boolean);
+
+  return (
+    <div className="copilot-rich">
+      {blocks.map((block, bi) => {
+        const lines = block.split("\n").map((l) => l.trim()).filter(Boolean);
+        const bulletLines = lines.filter((l) => /^[-•*]\s+/.test(l));
+        if (bulletLines.length && bulletLines.length === lines.length) {
+          return (
+            <ul key={bi} className="copilot-rich-list">
+              {lines.map((line, li) => (
+                <li key={li}>{renderInline(line.replace(/^[-•*]\s+/, ""))}</li>
+              ))}
+            </ul>
+          );
+        }
+        return (
+          <p key={bi} className="copilot-rich-p">
+            {lines.map((line, li) => (
+              <span key={li}>
+                {li > 0 && <br />}
+                {renderInline(line.replace(/^[-•*]\s+/, ""))}
+              </span>
+            ))}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 
 export function CopilotPanel({ city }: Props) {
   const [open, setOpen] = useState(false);
@@ -47,6 +94,7 @@ export function CopilotPanel({ city }: Props) {
   const send = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
+    setOpen(true);
     setError(null);
     setInput("");
     setMessages((prev) => [...prev, { role: "user", text: trimmed }]);
@@ -79,7 +127,7 @@ export function CopilotPanel({ city }: Props) {
           aria-modal="false"
         >
           <div className="copilot-window-head">
-            <div>
+            <div className="copilot-window-head-text">
               <p className="copilot-window-kicker">Ask AtmoVista</p>
               <h2 className="copilot-window-title">AQI Copilot · {city}</h2>
             </div>
@@ -101,7 +149,7 @@ export function CopilotPanel({ city }: Props) {
             )}
             {messages.map((m, idx) => (
               <div key={`${m.role}-${idx}`} className={`copilot-bubble ${m.role}`}>
-                <p>{m.text}</p>
+                {m.role === "assistant" ? <FormattedReply text={m.text} /> : <p>{m.text}</p>}
                 {m.note && <span className="copilot-note">{m.note}</span>}
               </div>
             ))}
@@ -116,7 +164,7 @@ export function CopilotPanel({ city }: Props) {
                   key={s}
                   type="button"
                   className="copilot-chip"
-                  onClick={() => send(s)}
+                  onClick={() => void send(s)}
                   disabled={loading}
                 >
                   {s}

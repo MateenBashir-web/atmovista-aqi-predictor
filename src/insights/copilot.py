@@ -117,37 +117,60 @@ def _fallback_reply(message: str, ctx: dict[str, Any]) -> str:
     tip = (ctx.get("health_tip") or {}).get("advice") or "Follow local health guidance."
     ex = ctx.get("exercise") or {}
     f24 = next((f for f in (ctx.get("forecast") or []) if f.get("horizon_hours") == 24), None)
+    aqi_label = f"{aqi}" if aqi is not None else "—"
 
     if any(k in q for k in ("jog", "run", "exercise", "workout", "walk", "sport")):
         return (
-            f"For {city} right now (AQI {aqi}, {cat}): {ex.get('headline') or tip}. "
-            f"{ex.get('detail') or ''}".strip()
+            f"**Exercise guidance · {city}**\n\n"
+            f"**Now:** AQI {aqi_label} ({cat})\n\n"
+            f"- {ex.get('headline') or 'Check conditions before training outdoors.'}\n"
+            f"- {ex.get('detail') or tip}"
         )
     if any(k in q for k in ("tomorrow", "24", "improve", "worse", "forecast", "next")):
         if f24:
             return (
-                f"In {city}, the +24h outlook is about AQI {f24.get('aqi')} ({f24.get('category')}). "
-                f"Current level is {aqi} ({cat}). {tip}"
+                f"**24-hour outlook · {city}**\n\n"
+                f"**Now:** AQI {aqi_label} ({cat})\n"
+                f"**+24h:** AQI {f24.get('aqi')} ({f24.get('category')})\n\n"
+                f"- {tip}"
             )
-        return f"Current AQI in {city} is {aqi} ({cat}). {tip}"
+        return (
+            f"**Air status · {city}**\n\n"
+            f"**Now:** AQI {aqi_label} ({cat})\n\n"
+            f"- {tip}"
+        )
     if any(k in q for k in ("mask", "window", "kids", "child", "asthma", "sensitive", "do now", "advice")):
-        return f"For {city} (AQI {aqi}, {cat}): {tip}"
+        return (
+            f"**What to do · {city}**\n\n"
+            f"**Now:** AQI {aqi_label} ({cat})\n\n"
+            f"- {tip}"
+        )
     if any(k in q for k in ("why", "pollutant", "pm2", "pm10", "cause")):
         driver = (ctx.get("weather") or {}).get("pollutant_driver") or "recent pollution and weather"
-        return f"In {city}, air is currently {cat} (AQI {aqi}). Main driver signal: {driver}. {tip}"
+        return (
+            f"**What’s driving the air · {city}**\n\n"
+            f"**Now:** AQI {aqi_label} ({cat})\n\n"
+            f"- Main driver signal: {driver}\n"
+            f"- {tip}"
+        )
     return (
-        f"{city} is currently AQI {aqi} ({cat}). {tip} "
-        f"Ask about exercise, tomorrow's outlook, or what to do now."
+        f"**Air status · {city}**\n\n"
+        f"**Now:** AQI {aqi_label} ({cat})\n\n"
+        f"- {tip}\n"
+        f"- Ask about exercise, tomorrow’s outlook, or what to do now."
     )
 
 
 def _call_groq(message: str, ctx: dict[str, Any], api_key: str) -> str:
     system = (
-        "You are AtmoVista Copilot, a helpful air-quality assistant for Pakistan cities. "
-        "Answer only from the provided live AtmoVista context. Be concise (3-6 short sentences). "
-        "Give practical advice for outdoor activity, masks, windows, and sensitive groups. "
-        "Do not invent sensor readings. Do not claim to be a doctor. "
-        "If unsure, say so and stick to the context numbers."
+        "You are AtmoVista Copilot, a professional air-quality assistant for Pakistan cities. "
+        "Answer only from the provided live AtmoVista context. Do not invent readings. "
+        "Do not claim to be a doctor.\n\n"
+        "Format every reply for high readability using this structure:\n"
+        "1) One short bold title line (e.g. **Exercise guidance · Lahore**)\n"
+        "2) A blank line, then 1–2 bold status lines like **Now:** AQI 187 (Unhealthy)\n"
+        "3) A blank line, then 2–4 bullet points starting with '- ' for clear actions\n"
+        "Keep it concise. Prefer bullets over long paragraphs. No emoji. No markdown tables."
     )
     user = (
         f"Live AtmoVista context:\n{_context_prompt(ctx)}\n\n"
@@ -155,8 +178,8 @@ def _call_groq(message: str, ctx: dict[str, Any], api_key: str) -> str:
     )
     payload = {
         "model": GROQ_MODEL,
-        "temperature": 0.3,
-        "max_tokens": 350,
+        "temperature": 0.25,
+        "max_tokens": 420,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
