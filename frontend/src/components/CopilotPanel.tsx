@@ -10,7 +10,9 @@ type ChatMsg = {
 const STARTERS = [
   "Is outdoor exercise OK today?",
   "Will air improve in 24 hours?",
-  "What should I do right now?",
+  "When is smog season worst?",
+  "What is driving AQI in SHAP?",
+  "How has the last week looked?",
 ];
 
 const ANIM_MS = 280;

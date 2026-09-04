@@ -124,7 +124,7 @@ Two modes:
 
 ### AQI Copilot
 
-Bottom-left chat button on the live app. It answers questions about the selected city using live AtmoVista data (current AQI, 3-day outlook, weather, health tips, exercise, alerts).
+Bottom-left chat button on the live app. It answers questions about the selected city using live AtmoVista data: current AQI, 3-day outlook, weather, health tips, exercise, alerts, recent history, smog-season patterns, SHAP drivers, and model / live accuracy.
 
 I used **Groq** on the free tier (`openai/gpt-oss-20b`). If the key is missing or Groq fails, it still replies with rule-based guidance from the same forecast data.
 
