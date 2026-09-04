@@ -54,6 +54,7 @@ AtmoVista covers these through a full pipeline and a dashboard with two modes: *
 | EDA | Done |
 | SHAP explainability | Done |
 | Hazardous AQI alerts | Done |
+| AQI Copilot chat (Groq + fallback) | Done |
 | GitHub repository + deployment | Done (GitHub, Render, Vercel, Hopsworks) |
 
 The brief suggested Streamlit or Gradio. My mentor allowed FastAPI + React instead, so I built a custom UI for better presentation marks.
@@ -309,6 +310,7 @@ In production (`STORAGE_MODE=hopsworks`) the API reads features from Hopsworks a
 | Weather | Temperature, humidity, wind, pollutants |
 | Health tips / exercise | User guidance |
 | Alerts | Unhealthy / hazardous warnings |
+| Copilot | Floating chat over live city data (Groq + fallback) |
 | Explain | Per-horizon SHAP, waterfall, narrative, city compare |
 | Leaderboard / ops / monitoring | Model and pipeline status |
 
@@ -335,6 +337,7 @@ Built with React + Vite + TypeScript, hosted on Vercel.
 - 3-day outlook with dates
 - Health tips, alerts, exercise advice
 - Smog season panel and city watchlist
+- Floating AQI Copilot (bottom-left chat)
 
 ### For experts
 
@@ -353,13 +356,18 @@ Built with React + Vite + TypeScript, hosted on Vercel.
 
 ---
 
-## 14. Alerts and health guidance
+## 14. Alerts, health guidance, and copilot
 
 | Feature | What it does |
 |---|---|
 | Alerts | Warn when current or forecast AQI is unhealthy or hazardous |
 | Health tips | Advice by AQI category (masking, windows, sensitive groups) |
 | Exercise advice | Suggests whether outdoor exercise is reasonable |
+| AQI Copilot | Chat helper for the selected city; uses live forecast/weather/tips |
+
+I added the copilot so people can ask simple questions (exercise, next 24 hours, what to do now) without digging through every panel. It is a floating button on the bottom-left, like most websites. Backend endpoint: `POST /insights/copilot`.
+
+For the LLM I used **Groq** (free tier, model `openai/gpt-oss-20b`). The key stays on the Render API only. If Groq is down or the key is missing, the same endpoint falls back to rule-based answers from AtmoVista data so the chat still works.
 
 ---
 
@@ -422,6 +430,7 @@ Secrets: `HOPSWORKS_API_KEY`, `HOPSWORKS_PROJECT`, `HOPSWORKS_HOST` (optional).
 | Signed SHAP + waterfall | Clearer explainability |
 | Confidence bands | Show uncertainty |
 | Smog season + exercise cards | Practical for users |
+| AQI Copilot (Groq + fallback) | Quick Q&A from live city data |
 | Live monitoring | Compare forecasts to what actually happened |
 | Beat-persistence baseline | Show the model adds value |
 
@@ -444,12 +453,13 @@ Secrets: `HOPSWORKS_API_KEY`, `HOPSWORKS_PROJECT`, `HOPSWORKS_HOST` (optional).
 4. Push notifications for alerts
 5. Longer monitoring history
 6. Better uptime checks for the public demo
+7. Richer copilot (multi-city compare in chat, daily briefing)
 
 ---
 
 ## 21. Conclusion
 
-I completed the internship project as a full AQI forecasting pipeline: data, features, training, Hopsworks, automation, explainability, alerts, and a deployed dashboard. The app is on GitHub and runs live on Render and Vercel.
+I completed the internship project as a full AQI forecasting pipeline: data, features, training, Hopsworks, automation, explainability, alerts, and a deployed dashboard with a floating AQI Copilot. The app is on GitHub and runs live on Render and Vercel.
 
 The best results are at +24h (validation R² ≈ 0.72, category accuracy ≈ 73%). Live monitoring on 3500 scored rows shows overall MAE ≈ 12.3 and category accuracy ≈ 75%. I think this is good enough for short-term air quality planning in the cities I covered.
 
@@ -465,7 +475,9 @@ The best results are at +24h (validation R² ≈ 0.72, category accuracy ≈ 73%
 | pipelines/hopsworks_sync.py | Feature and model sync |
 | pipelines/monitor_pipeline.py | Forecast vs actual logging |
 | api/main.py | FastAPI serving |
+| src/insights/copilot.py | AQI Copilot (Groq + fallback) |
 | frontend/src/App.tsx | AtmoVista dashboard |
+| frontend/src/components/CopilotPanel.tsx | Floating chat UI |
 | artifacts/model_leaderboard.json | Training results |
 | notebooks/eda.ipynb | EDA |
 | .github/workflows/ | CI/CD |

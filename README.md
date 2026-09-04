@@ -17,6 +17,7 @@ It covers 5 cities (Lahore, Karachi, Islamabad, Peshawar, Quetta) and predicts A
 - **Frontend:** React + Vite + TypeScript
 - **Automation:** GitHub Actions (hourly features + daily training)
 - **Explainability:** SHAP (per-horizon, signed drivers, waterfall, narrative)
+- **Copilot:** floating AQI chat (Groq free tier + local fallback)
 - **Deploy:** Render (API, Standard) + Vercel (frontend) — live
 
 **Live demo**
@@ -121,22 +122,26 @@ Two modes:
 - **For you** — map, current AQI, 3-day forecast, weather + pollutant breakdown, health tips, alerts, exercise advice, floating AQI Copilot chat
 - **For experts** — leaderboard, per-horizon SHAP (signed + waterfall + narrative), city compare, global drivers, baseline, pipeline status, live accuracy
 
-### AQI Copilot (free)
+### AQI Copilot
 
-Floating chat button (bottom-left) on the live site. It answers from live AtmoVista data for the selected city (forecast, weather, tips, exercise, alerts).
+Bottom-left chat button on the live app. It answers questions about the selected city using live AtmoVista data (current AQI, 3-day outlook, weather, health tips, exercise, alerts).
 
-1. Create a free key at [console.groq.com](https://console.groq.com)
-2. Add to root `.env` (local) and Render env vars (production):
+I used **Groq** on the free tier (`openai/gpt-oss-20b`). If the key is missing or Groq fails, it still replies with rule-based guidance from the same forecast data.
+
+Setup:
+
+1. Free key from [console.groq.com](https://console.groq.com)
+2. Add to root `.env` (local) and Render env (production):
 
 ```
 GROQ_API_KEY=your_groq_key
 ```
 
-Optional: `GROQ_MODEL=openai/gpt-oss-20b` (default; free-tier friendly)
-
-Without a key, the copilot still answers with local rule-based guidance from your forecast data.
+Optional: `GROQ_MODEL=openai/gpt-oss-20b` (this is already the default)
 
 API: `POST /insights/copilot` with `{ "city": "Lahore", "message": "Is jogging OK tomorrow?" }`
+
+Note: the key only goes on **Render** (API). Vercel does not need `GROQ_API_KEY`.
 
 ---
 
