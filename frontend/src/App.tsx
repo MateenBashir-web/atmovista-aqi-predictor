@@ -33,6 +33,7 @@ import {
   PipelinePanel,
   SmogSeasonPanel,
 } from "./components/InsightPanels";
+import { CopilotPanel } from "./components/CopilotPanel";
 import { PakistanMap } from "./components/PakistanMap";
 import { PollutantBreakdown } from "./components/PollutantBreakdown";
 import { useAnimatedNumber } from "./hooks/useAnimatedNumber";
@@ -1415,6 +1416,10 @@ function App() {
         <section className="grid-2 reveal reveal-3">
           <ExerciseCard data={exercise} error={insightError && !exercise ? "insights" : null} />
           <SmogSeasonPanel data={smogSeason} error={smogError && !smogSeason ? "smog" : null} />
+        </section>
+
+        <section className="reveal reveal-3">
+          <CopilotPanel city={city} />
         </section>
 
         <section className="grid-2 reveal reveal-3">

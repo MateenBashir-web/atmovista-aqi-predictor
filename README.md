@@ -107,6 +107,7 @@ Most of these take `?city=Lahore` (or another city):
 - `/aqi/explain/global` (training-time global SHAP summary)
 - `/aqi/alerts`
 - `/aqi/health-tips`
+- `/insights/copilot` (AQI chat — POST)
 - `/models/leaderboard`
 - `/ops/status`
 - `/ops/monitoring`
@@ -117,8 +118,25 @@ Most of these take `?city=Lahore` (or another city):
 
 Two modes:
 
-- **For you** — map, current AQI, 3-day forecast, weather + pollutant breakdown, health tips, alerts, exercise advice
+- **For you** — map, current AQI, 3-day forecast, weather + pollutant breakdown, health tips, alerts, exercise advice, AQI Copilot chat
 - **For experts** — leaderboard, per-horizon SHAP (signed + waterfall + narrative), city compare, global drivers, baseline, pipeline status, live accuracy
+
+### AQI Copilot (free)
+
+Chat helper in **For you** mode. It answers from live AtmoVista data for the selected city (forecast, weather, tips, exercise, alerts).
+
+1. Create a free key at [console.groq.com](https://console.groq.com)
+2. Add to root `.env` (local) and Render env vars (production):
+
+```
+GROQ_API_KEY=your_groq_key
+```
+
+Optional: `GROQ_MODEL=llama-3.1-8b-instant` (default)
+
+Without a key, the copilot still answers with local rule-based guidance from your forecast data.
+
+API: `POST /insights/copilot` with `{ "city": "Lahore", "message": "Is jogging OK tomorrow?" }`
 
 ---
 

@@ -300,6 +300,16 @@ export type CitySnapshotResponse = {
   event_time?: string;
 };
 
+export type CopilotResponse = {
+  city: string;
+  reply: string;
+  provider: string;
+  model?: string | null;
+  fallback?: boolean;
+  note?: string;
+  suggestions?: string[];
+};
+
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 function isRetriableNetworkError(message: string): boolean {
@@ -331,6 +341,29 @@ async function getJson<T>(path: string, retries = 4): Promise<T> {
       if (!isRetriableNetworkError(lastError.message) || attempt >= retries) break;
       const delayMs = Math.min(800 * attempt, 2500);
       await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+  throw lastError ?? new Error("Request failed");
+}
+
+async function postJson<T>(path: string, body: unknown, retries = 2): Promise<T> {
+  let lastError: Error | null = null;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(`${API_URL}${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Request failed: ${res.status}`);
+      }
+      return (await res.json()) as T;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (!isRetriableNetworkError(lastError.message) || attempt >= retries) break;
+      await new Promise((r) => setTimeout(r, Math.min(800 * attempt, 2500)));
     }
   }
   throw lastError ?? new Error("Request failed");
@@ -382,6 +415,8 @@ export const api = {
     getJson<ExplainAqiResponse>(`/insights/explain-aqi?city=${encodeURIComponent(city)}`),
   exercise: (city: string) =>
     getJson<ExerciseResponse>(`/insights/exercise?city=${encodeURIComponent(city)}`),
+  copilot: (city: string, message: string) =>
+    postJson<CopilotResponse>("/insights/copilot", { city, message }),
   baseline: () => getJson<BaselineResponse>("/ops/baseline"),
   pipeline: () => getJson<PipelineResponse>("/ops/pipeline"),
 };

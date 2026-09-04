@@ -27,6 +27,8 @@ from src.insights.creative import (
     pipeline_health,
     smog_season_calendar,
 )
+from src.insights.copilot import ask_copilot
+from pydantic import BaseModel, Field
 from src.monitoring.forecast_log import get_monitoring_summary
 from src.utils.aqi_bands import AQI_BANDS
 from src.utils.config import get_project_root, load_config
@@ -368,6 +370,25 @@ def insights_exercise(city: str = Query(...)):
         f24.get("category") if f24 else None,
     )
     return {"city": city, **advice}
+
+
+class CopilotRequest(BaseModel):
+    city: str = Field(default="Lahore")
+    message: str = Field(..., min_length=1, max_length=500)
+
+
+@app.post("/insights/copilot")
+def insights_copilot(body: CopilotRequest):
+    city = _validate_city(body.city)
+    try:
+        return ask_copilot(city, body.message, config)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
 
 @app.get("/ops/baseline")
 def ops_baseline():
