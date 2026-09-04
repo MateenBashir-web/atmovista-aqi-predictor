@@ -436,7 +436,64 @@ Secrets: `HOPSWORKS_API_KEY`, `HOPSWORKS_PROJECT`, `HOPSWORKS_HOST` (optional).
 
 ---
 
-## 19. Limitations
+## 19. Why I chose this methodology
+
+I did not pick tools only because they were in the brief. For each main choice I had a practical reason.
+
+### Data source (Open-Meteo)
+
+The brief mentioned AQICN / OpenWeather-style APIs. I chose **Open-Meteo** because it is free, needs no paid key, and gives both air quality and weather for the same coordinates. That made it easier to join pollutants with temperature, humidity, and wind for features. For an internship timeline, paid quotas and key limits would have slowed me down.
+
+### Features and horizons
+
+I built **lag / rolling / time / future-weather** features and trained **separate models for +24h, +48h, and +72h**. Air quality persistence is strong at short range, so lags help a lot at +24h. Longer horizons need more weather context, and error naturally grows, so picking a winner **per horizon** was fairer than forcing one model for all three.
+
+### Model family (classical + LSTM)
+
+I trained Ridge, Random Forest, HistGradientBoosting, and LSTM. LSTM was required as the advanced option, but I still kept classical models because tabular lag features often work well on hourly AQI. In my runs, **Ridge / HistGB beat LSTM** on validation RMSE for the winning horizons. I kept the winners by metric, not by which model sounded more advanced.
+
+### Hopsworks + GitHub Actions
+
+Hopsworks covers the Feature Store and Model Registry from the brief. For orchestration I used **GitHub Actions** instead of Airflow: it is free on GitHub, already connected to my repo, and enough for hourly feature refresh + daily training. Airflow would have been heavier for this project size.
+
+### FastAPI + React (not Streamlit / Gradio)
+
+The brief suggested Streamlit or Gradio. After checking with my mentor, I built **FastAPI + React** so I could design a proper two-mode dashboard (everyday vs experts), map, SHAP views, and a floating copilot. It took more UI work, but the demo looks closer to a real product.
+
+### Explainability (SHAP)
+
+I used SHAP because the brief asked for XAI. I went beyond a single bar chart: **per-horizon explanations**, signed local drivers, waterfall, and a short narrative. That matches how mentors review “why did the model say this?”
+
+### Copilot (Groq + fallback)
+
+I added a floating chat so users can ask simple questions without scrolling every panel. I chose **Groq** for a free, fast chat API. The key stays on Render only. I also kept a **rule-based fallback** so the chat still works if the LLM is down or the model name changes.
+
+### Render Standard + Vercel
+
+API on Render, UI on Vercel is a common free/low-cost split. I used Render **Standard** during mentor demos so the API does not sleep mid-review. Vercel hosts the static React build and points `VITE_API_URL` at Render.
+
+---
+
+## 20. Problems I faced and how I fixed them
+
+| Problem | What happened | How I fixed it |
+|---|---|---|
+| Empty / broken Open-Meteo responses | Hourly feature jobs sometimes failed with empty JSON / decode errors | Added retries and safer JSON handling in the Open-Meteo client |
+| Hopsworks model upload 500 | Training finished, but registry upload failed randomly | Added retries in `hopsworks_sync` and in the training workflow |
+| LSTM not winning | LSTM trained successfully but lost on RMSE to classical models | Kept LSTM in the comparison, selected winners by validation metrics |
+| UI felt like two different apps | Everyday users need tips; mentors need SHAP / leaderboard | Split the dashboard into **For you** and **For experts** |
+| Copilot model 404 | Free Groq key could not use `llama-3.1-8b-instant` (enterprise-only) | Switched default model to `openai/gpt-oss-20b` and documented it |
+| Copilot without a key | Chat would be useless if Groq failed | Built local fallback answers from the same live forecast context |
+| Floating chat covered the header | Panel grew upward and blocked city selection / close controls | Capped height, kept scroll inside the panel, smoother open/close |
+| Vercel not always auto-updating | Frontend stayed on an old build after Git pushes | Manual / CLI production deploy when Git sync lagged |
+| “Updated” time looked stale | UI used the wrong clock vs latest observation hour | Tied the freshness label to forecast `event_time` |
+| Free-tier / hosting limits | Sleeping API or store timeouts during demos | Used Render Standard for reviews; cached Hopsworks features in the API |
+
+These issues were normal for a full MLOps stack. Most fixes were retries, clearer product UX, and choosing free tools that still work under demo pressure.
+
+---
+
+## 21. Limitations
 
 1. Open-Meteo AQI is model-based, not always the same as a local sensor.
 2. +48h and +72h errors are naturally higher.
@@ -445,7 +502,7 @@ Secrets: `HOPSWORKS_API_KEY`, `HOPSWORKS_PROJECT`, `HOPSWORKS_HOST` (optional).
 
 ---
 
-## 20. Future work
+## 22. Future work
 
 1. Add ground-station AQI where available
 2. Category probability forecasts
@@ -457,15 +514,17 @@ Secrets: `HOPSWORKS_API_KEY`, `HOPSWORKS_PROJECT`, `HOPSWORKS_HOST` (optional).
 
 ---
 
-## 21. Conclusion
+## 23. Conclusion
 
 I completed the internship project as a full AQI forecasting pipeline: data, features, training, Hopsworks, automation, explainability, alerts, and a deployed dashboard with a floating AQI Copilot. The app is on GitHub and runs live on Render and Vercel.
+
+Along the way I had to justify each stack choice and fix real pipeline / deploy / LLM issues. That was as important as the metrics.
 
 The best results are at +24h (validation R² ≈ 0.72, category accuracy ≈ 73%). Live monitoring on 3500 scored rows shows overall MAE ≈ 12.3 and category accuracy ≈ 75%. I think this is good enough for short-term air quality planning in the cities I covered.
 
 ---
 
-## 22. Appendix — main files
+## 24. Appendix — main files
 
 | Path | Role |
 |---|---|
