@@ -168,7 +168,17 @@ def _call_groq(message: str, ctx: dict[str, Any], api_key: str) -> str:
     }
     with httpx.Client(timeout=25.0) as client:
         res = client.post(GROQ_URL, headers=headers, json=payload)
-        res.raise_for_status()
+        if res.status_code >= 400:
+            detail = ""
+            try:
+                err = res.json()
+                detail = str(
+                    ((err.get("error") or {}) if isinstance(err, dict) else {}).get("message")
+                    or err
+                )[:180]
+            except Exception:
+                detail = (res.text or "")[:180]
+            raise RuntimeError(f"HTTP {res.status_code}: {detail or res.reason_phrase}")
         data = res.json()
     content = (((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "").strip()
     if not content:
@@ -206,13 +216,14 @@ def ask_copilot(city: str, message: str, config: dict[str, Any] | None = None) -
             }
         except Exception as exc:
             reply = _fallback_reply(text, ctx)
+            err_msg = str(exc).strip()[:200] or type(exc).__name__
             return {
                 "city": city,
                 "reply": reply,
                 "provider": "fallback",
                 "model": None,
                 "fallback": True,
-                "note": f"Groq unavailable ({type(exc).__name__}); used local guidance.",
+                "note": f"Groq unavailable ({err_msg}); used local guidance.",
                 "suggestions": [
                     "Is outdoor exercise OK today?",
                     "Will air improve in 24 hours?",
