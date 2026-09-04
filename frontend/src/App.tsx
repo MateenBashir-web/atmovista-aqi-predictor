@@ -1418,10 +1418,6 @@ function App() {
           <SmogSeasonPanel data={smogSeason} error={smogError && !smogSeason ? "smog" : null} />
         </section>
 
-        <section className="reveal reveal-3">
-          <CopilotPanel city={city} />
-        </section>
-
         <section className="grid-2 reveal reveal-3">
           <div className={`panel ${historyLoading ? "is-section-loading" : ""}`}>
             <div className="section-head">
@@ -2162,6 +2158,8 @@ function App() {
           </p>
         </footer>
       </div>
+
+      <CopilotPanel city={city} />
 
       <ExplainAqiModal
         open={explainOpen}

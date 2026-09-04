@@ -118,12 +118,12 @@ Most of these take `?city=Lahore` (or another city):
 
 Two modes:
 
-- **For you** — map, current AQI, 3-day forecast, weather + pollutant breakdown, health tips, alerts, exercise advice, AQI Copilot chat
+- **For you** — map, current AQI, 3-day forecast, weather + pollutant breakdown, health tips, alerts, exercise advice, floating AQI Copilot chat
 - **For experts** — leaderboard, per-horizon SHAP (signed + waterfall + narrative), city compare, global drivers, baseline, pipeline status, live accuracy
 
 ### AQI Copilot (free)
 
-Chat helper in **For you** mode. It answers from live AtmoVista data for the selected city (forecast, weather, tips, exercise, alerts).
+Floating chat button (bottom-left) on the live site. It answers from live AtmoVista data for the selected city (forecast, weather, tips, exercise, alerts).
 
 1. Create a free key at [console.groq.com](https://console.groq.com)
 2. Add to root `.env` (local) and Render env vars (production):

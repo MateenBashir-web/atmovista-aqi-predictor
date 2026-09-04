@@ -18,12 +18,14 @@ type Props = {
 };
 
 export function CopilotPanel({ city }: Props) {
+  const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState(STARTERS);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setMessages([]);
@@ -33,7 +35,14 @@ export function CopilotPanel({ city }: Props) {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [messages, loading]);
+  }, [messages, loading, open]);
+
+  useEffect(() => {
+    if (open) {
+      const t = window.setTimeout(() => inputRef.current?.focus(), 80);
+      return () => window.clearTimeout(t);
+    }
+  }, [open]);
 
   const send = async (text: string) => {
     const trimmed = text.trim();
@@ -61,66 +70,99 @@ export function CopilotPanel({ city }: Props) {
   };
 
   return (
-    <div className="panel copilot-panel">
-      <div className="section-head">
-        <div>
-          <p className="section-kicker">Ask AtmoVista</p>
-          <h2 className="section-title">AQI Copilot · {city}</h2>
-        </div>
-        <span className="section-icon">✦</span>
-      </div>
-      <p className="section-sub">
-        Ask about outdoor exercise, tomorrow’s outlook, or what to do for this city’s air quality.
-      </p>
-
-      <div className="copilot-thread" aria-live="polite">
-        {!messages.length && !loading && (
-          <div className="copilot-empty">
-            Try a quick question about {city}’s air right now.
-          </div>
-        )}
-        {messages.map((m, idx) => (
-          <div key={`${m.role}-${idx}`} className={`copilot-bubble ${m.role}`}>
-            <p>{m.text}</p>
-            {m.note && <span className="copilot-note">{m.note}</span>}
-          </div>
-        ))}
-        {loading && <div className="copilot-bubble assistant muted">Thinking…</div>}
-        <div ref={bottomRef} />
-      </div>
-
-      {!!suggestions.length && (
-        <div className="copilot-suggestions">
-          {suggestions.map((s) => (
-            <button key={s} type="button" className="copilot-chip" onClick={() => send(s)} disabled={loading}>
-              {s}
+    <div className={`copilot-dock ${open ? "is-open" : ""}`}>
+      {open && (
+        <div
+          className="copilot-window"
+          role="dialog"
+          aria-label={`AQI Copilot for ${city}`}
+          aria-modal="false"
+        >
+          <div className="copilot-window-head">
+            <div>
+              <p className="copilot-window-kicker">Ask AtmoVista</p>
+              <h2 className="copilot-window-title">AQI Copilot · {city}</h2>
+            </div>
+            <button
+              type="button"
+              className="copilot-close"
+              onClick={() => setOpen(false)}
+              aria-label="Close chat"
+            >
+              ×
             </button>
-          ))}
+          </div>
+
+          <div className="copilot-thread" aria-live="polite">
+            {!messages.length && !loading && (
+              <div className="copilot-empty">
+                Ask about outdoor exercise, tomorrow’s outlook, or what to do for {city}’s air.
+              </div>
+            )}
+            {messages.map((m, idx) => (
+              <div key={`${m.role}-${idx}`} className={`copilot-bubble ${m.role}`}>
+                <p>{m.text}</p>
+                {m.note && <span className="copilot-note">{m.note}</span>}
+              </div>
+            ))}
+            {loading && <div className="copilot-bubble assistant muted">Thinking…</div>}
+            <div ref={bottomRef} />
+          </div>
+
+          {!!suggestions.length && (
+            <div className="copilot-suggestions">
+              {suggestions.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className="copilot-chip"
+                  onClick={() => send(s)}
+                  disabled={loading}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {error && <p className="copilot-error">{error}</p>}
+
+          <form
+            className="copilot-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void send(input);
+            }}
+          >
+            <input
+              ref={inputRef}
+              className="copilot-input"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={`Ask about ${city}…`}
+              maxLength={500}
+              disabled={loading}
+              aria-label="Ask the AQI copilot"
+            />
+            <button type="submit" className="btn btn-primary copilot-send" disabled={loading || !input.trim()}>
+              Ask
+            </button>
+          </form>
         </div>
       )}
 
-      {error && <p className="copilot-error">{error}</p>}
-
-      <form
-        className="copilot-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void send(input);
-        }}
+      <button
+        type="button"
+        className="copilot-fab"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-label={open ? "Close AQI Copilot" : "Open AQI Copilot"}
       >
-        <input
-          className="copilot-input"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={`Ask about ${city} air quality…`}
-          maxLength={500}
-          disabled={loading}
-          aria-label="Ask the AQI copilot"
-        />
-        <button type="submit" className="btn btn-primary copilot-send" disabled={loading || !input.trim()}>
-          Ask
-        </button>
-      </form>
+        <span className="copilot-fab-icon" aria-hidden="true">
+          {open ? "×" : "✦"}
+        </span>
+        <span className="copilot-fab-label">{open ? "Close" : "Ask air"}</span>
+      </button>
     </div>
   );
 }
