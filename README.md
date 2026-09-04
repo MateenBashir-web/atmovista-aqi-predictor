@@ -132,7 +132,7 @@ Chat helper in **For you** mode. It answers from live AtmoVista data for the sel
 GROQ_API_KEY=your_groq_key
 ```
 
-Optional: `GROQ_MODEL=llama-3.1-8b-instant` (default)
+Optional: `GROQ_MODEL=openai/gpt-oss-20b` (default; free-tier friendly)
 
 Without a key, the copilot still answers with local rule-based guidance from your forecast data.
 

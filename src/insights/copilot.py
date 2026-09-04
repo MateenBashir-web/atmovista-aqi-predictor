@@ -11,7 +11,7 @@ from src.insights.creative import exercise_advice
 from src.utils.health_tips import health_tip_for_aqi_category
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
 
 
 def _build_context(city: str, config: dict[str, Any]) -> dict[str, Any]:
