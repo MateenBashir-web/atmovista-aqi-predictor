@@ -13,6 +13,8 @@ const STARTERS = [
   "What should I do right now?",
 ];
 
+const ANIM_MS = 280;
+
 type Props = {
   city: string;
 };
@@ -66,6 +68,7 @@ function FormattedReply({ text }: { text: string }) {
 
 export function CopilotPanel({ city }: Props) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [messages, setMessages] = useState<ChatMsg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -73,6 +76,7 @@ export function CopilotPanel({ city }: Props) {
   const [suggestions, setSuggestions] = useState(STARTERS);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const closeTimer = useRef<number | null>(null);
 
   useEffect(() => {
     setMessages([]);
@@ -86,15 +90,41 @@ export function CopilotPanel({ city }: Props) {
 
   useEffect(() => {
     if (open) {
-      const t = window.setTimeout(() => inputRef.current?.focus(), 80);
+      const t = window.setTimeout(() => inputRef.current?.focus(), 220);
       return () => window.clearTimeout(t);
     }
   }, [open]);
 
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    };
+  }, []);
+
+  const openPanel = () => {
+    if (closeTimer.current) {
+      window.clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+    setMounted(true);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setOpen(true));
+    });
+  };
+
+  const closePanel = () => {
+    setOpen(false);
+    if (closeTimer.current) window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => {
+      setMounted(false);
+      closeTimer.current = null;
+    }, ANIM_MS);
+  };
+
   const send = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
-    setOpen(true);
+    if (!open) openPanel();
     setError(null);
     setInput("");
     setMessages((prev) => [...prev, { role: "user", text: trimmed }]);
@@ -118,13 +148,14 @@ export function CopilotPanel({ city }: Props) {
   };
 
   return (
-    <div className={`copilot-dock ${open ? "is-open" : ""}`}>
-      {open && (
+    <div className={`copilot-dock ${open ? "is-open" : ""} ${mounted ? "is-mounted" : ""}`}>
+      {mounted && (
         <div
           className="copilot-window"
           role="dialog"
           aria-label={`AQI Copilot for ${city}`}
           aria-modal="false"
+          aria-hidden={!open}
         >
           <div className="copilot-window-head">
             <div className="copilot-window-head-text">
@@ -134,7 +165,7 @@ export function CopilotPanel({ city }: Props) {
             <button
               type="button"
               className="copilot-close"
-              onClick={() => setOpen(false)}
+              onClick={closePanel}
               aria-label="Close chat"
             >
               ×
@@ -157,7 +188,7 @@ export function CopilotPanel({ city }: Props) {
             <div ref={bottomRef} />
           </div>
 
-          {!!suggestions.length && messages.length < 2 && (
+          {!!suggestions.length && (
             <div className="copilot-suggestions">
               {suggestions.map((s) => (
                 <button
@@ -199,20 +230,20 @@ export function CopilotPanel({ city }: Props) {
         </div>
       )}
 
-      {!open && (
-        <button
-          type="button"
-          className="copilot-fab"
-          onClick={() => setOpen(true)}
-          aria-expanded={false}
-          aria-label="Open AQI Copilot"
-        >
-          <span className="copilot-fab-icon" aria-hidden="true">
-            ✦
-          </span>
-          <span className="copilot-fab-label">Ask air</span>
-        </button>
-      )}
+      <button
+        type="button"
+        className="copilot-fab"
+        onClick={openPanel}
+        aria-expanded={open}
+        aria-hidden={open}
+        tabIndex={open ? -1 : 0}
+        aria-label="Open AQI Copilot"
+      >
+        <span className="copilot-fab-icon" aria-hidden="true">
+          ✦
+        </span>
+        <span className="copilot-fab-label">Ask air</span>
+      </button>
     </div>
   );
 }
