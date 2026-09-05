@@ -39,7 +39,8 @@ aqi-predictor/
   frontend/            AtmoVista UI
   notebooks/           EDA
   artifacts/           models, leaderboard, shap stuff
-  docs/                my internship report
+  docs/                internship report (PDF)
+  screen_recording/    full project walkthrough videos
   .github/workflows/   automation
 ```
 
@@ -173,9 +174,13 @@ Notes:
 
 ---
 
-## Report
+## Report and demo recording
 
-More detail on what I built, EDA, and results:
+Internship write-up (PDF only):
 
-- [docs/AtmoVista_Internship_Report.md](docs/AtmoVista_Internship_Report.md)
 - [docs/AtmoVista_Internship_Report.pdf](docs/AtmoVista_Internship_Report.pdf)
+
+If the live app is slow or unavailable during evaluation, mentors can watch the full walkthrough here:
+
+- [screen_recording/AtmoVista Part 1.mp4](screen_recording/AtmoVista%20Part%201.mp4)
+- [screen_recording/AtmoVista Part 2.mp4](screen_recording/AtmoVista%20Part%202.mp4)
