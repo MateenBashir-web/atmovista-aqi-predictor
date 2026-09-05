@@ -180,7 +180,11 @@ Internship write-up (PDF only):
 
 - [docs/AtmoVista_Internship_Report.pdf](docs/AtmoVista_Internship_Report.pdf)
 
-If the live app is slow or unavailable during evaluation, mentors can watch the full walkthrough here:
+### Project walkthrough videos
 
-- [screen_recording/AtmoVista Part 1.mp4](screen_recording/AtmoVista%20Part%201.mp4)
-- [screen_recording/AtmoVista Part 2.mp4](screen_recording/AtmoVista%20Part%202.mp4)
+If the live app is slow or unavailable during evaluation, use these recordings of the full project demo:
+
+- [AtmoVista Part 1.mp4](screen_recording/AtmoVista%20Part%201.mp4)
+- [AtmoVista Part 2.mp4](screen_recording/AtmoVista%20Part%202.mp4)
+
+**How to watch:** GitHub does not play these large videos in the browser. Open a file link → click **Download** (or the download icon) → open the `.mp4` on your computer. Both parts are stored with Git LFS in `screen_recording/`.
